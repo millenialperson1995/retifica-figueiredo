@@ -1,4 +1,4 @@
-import type { Customer, Vehicle, Budget, Order } from "./types"
+import type { Customer, Vehicle, Budget, Order, InventoryItem } from "./types"
 
 export const mockCustomers: Customer[] = [
   {
@@ -216,4 +216,90 @@ export function getBudgetById(id: string): Budget | undefined {
 
 export function getOrderById(id: string): Order | undefined {
   return mockOrders.find((o) => o.id === id)
+}
+
+export const mockInventory: InventoryItem[] = [
+  {
+    id: "1",
+    name: "Jogo de juntas do motor",
+    description: "Jogo completo de juntas para motor a gasolina",
+    category: "Juntas",
+    sku: "JG-001",
+    quantity: 5,
+    minQuantity: 2,
+    unitPrice: 350,
+    supplier: "Autopecas SA",
+    notes: "Compatível com motores 1.0 e 1.6",
+    createdAt: new Date("2024-01-10"),
+    updatedAt: new Date("2024-03-15"),
+  },
+  {
+    id: "2",
+    name: "Junta do cabeçote",
+    description: "Junta do cabeçote para motor 1.6",
+    category: "Juntas",
+    sku: "JC-002",
+    quantity: 10,
+    minQuantity: 3,
+    unitPrice: 120,
+    supplier: "Autopecas SA",
+    notes: "Material de alta qualidade",
+    createdAt: new Date("2024-01-15"),
+    updatedAt: new Date("2024-03-20"),
+  },
+  {
+    id: "3",
+    name: "Óleo 5W30",
+    description: "Óleo lubrificante semi-sintético 5W30",
+    category: "Lubrificantes",
+    sku: "OL-5W30",
+    quantity: 20,
+    minQuantity: 5,
+    unitPrice: 45,
+    supplier: "Lubrificantes Ltda",
+    notes: "Indicado para motores a gasolina",
+    createdAt: new Date("2024-02-01"),
+    updatedAt: new Date("2024-03-22"),
+  },
+  {
+    id: "4",
+    name: "Filtro de óleo",
+    description: "Filtro de óleo para motor",
+    category: "Filtros",
+    sku: "FO-001",
+    quantity: 15,
+    minQuantity: 5,
+    unitPrice: 25,
+    supplier: "Autopecas SA",
+    notes: "Compatível com diversos modelos",
+    createdAt: new Date("2024-02-10"),
+    updatedAt: new Date("2024-03-25"),
+  },
+  {
+    id: "5",
+    name: "Pastilha de freio dianteira",
+    description: "Pastilha de freio dianteira para veículos leves",
+    category: "Freios",
+    sku: "PF-001",
+    quantity: 8,
+    minQuantity: 3,
+    unitPrice: 85,
+    supplier: "Freios Ltda",
+    notes: "Garantia de 1 ano",
+    createdAt: new Date("2024-03-01"),
+    updatedAt: new Date("2024-03-28"),
+  },
+]
+
+// Helper functions for inventory
+export function getInventoryById(id: string): InventoryItem | undefined {
+  return mockInventory.find((i) => i.id === id)
+}
+
+export function getInventoryBySku(sku: string): InventoryItem | undefined {
+  return mockInventory.find((i) => i.sku === sku)
+}
+
+export function getInventoryByCategory(category: string): InventoryItem[] {
+  return mockInventory.filter((i) => i.category === category)
 }

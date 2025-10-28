@@ -39,6 +39,7 @@ export interface PartItem {
   quantity: number
   unitPrice: number
   total: number
+  inventoryId?: string
 }
 
 export interface Budget {
@@ -53,6 +54,21 @@ export interface Budget {
   discount: number
   total: number
   notes?: string
+}
+
+export interface InventoryItem {
+  id: string
+  name: string
+  description: string
+  category: string
+  sku: string
+  quantity: number
+  minQuantity: number
+  unitPrice: number
+  supplier?: string
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface Order {

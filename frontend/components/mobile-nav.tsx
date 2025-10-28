@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, FileText, Users, Wrench } from "lucide-react"
+import { Home, FileText, Users, Wrench, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth-provider"
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/budgets", label: "Orçamentos", icon: FileText },
   { href: "/customers", label: "Clientes", icon: Users },
   { href: "/orders", label: "OS", icon: Wrench },
+  { href: "/inventory", label: "Estoque", icon: Package },
 ]
 
 export function MobileNav() {

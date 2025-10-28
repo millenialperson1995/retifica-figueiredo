@@ -12,9 +12,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { getCustomers, getVehicles, saveBudget, initializeStorage } from "@/lib/storage"
-import type { ServiceItem, PartItem, Budget } from "@/lib/types"
+import type { ServiceItem, PartItem, Budget, InventoryItem } from "@/lib/types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { mockInventory, getInventoryById } from "@/lib/mock-data"
 
 export function NewBudgetForm() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export function NewBudgetForm() {
     { id: "1", description: "", quantity: 1, unitPrice: 0, total: 0 },
   ])
   const [parts, setParts] = useState<PartItem[]>([
-    { id: "1", description: "", partNumber: "", quantity: 1, unitPrice: 0, total: 0 },
+    { id: "1", description: "", partNumber: "", quantity: 1, unitPrice: 0, total: 0, inventoryId: undefined },
   ])
 
   const customers = getCustomers()
@@ -94,6 +95,28 @@ export function NewBudgetForm() {
         return p
       }),
     )
+  }
+
+  const updatePartWithInventory = (id: string, inventoryId: string) => {
+    const inventoryItem = getInventoryById(inventoryId);
+    if (inventoryItem) {
+      setParts(
+        parts.map((p) => {
+          if (p.id === id) {
+            const updated = {
+              ...p,
+              inventoryId: inventoryItem.id,
+              description: inventoryItem.name,
+              partNumber: inventoryItem.sku,
+              unitPrice: inventoryItem.unitPrice,
+            };
+            updated.total = Number(updated.quantity) * Number(updated.unitPrice);
+            return updated;
+          }
+          return p;
+        }),
+      );
+    }
   }
 
   const subtotal = [...services, ...parts].reduce((sum, item) => sum + item.total, 0)
@@ -322,12 +345,32 @@ export function NewBudgetForm() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label>Peça do Estoque</Label>
+                    <Select
+                      value={part.inventoryId || ""}
+                      onValueChange={(value) => updatePartWithInventory(part.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma peça do estoque" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {mockInventory.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Descrição *</Label>
                     <Input
                       value={part.description}
                       onChange={(e) => updatePart(part.id, "description", e.target.value)}
                       placeholder="Ex: Jogo de juntas do motor"
                       required
+                      disabled={!!part.inventoryId}
                     />
                   </div>
 
@@ -337,6 +380,7 @@ export function NewBudgetForm() {
                       value={part.partNumber}
                       onChange={(e) => updatePart(part.id, "partNumber", e.target.value)}
                       placeholder="Ex: JG-001"
+                      disabled={!!part.inventoryId}
                     />
                   </div>
 

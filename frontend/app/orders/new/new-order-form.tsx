@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
-import { mockCustomers, mockBudgets, getVehiclesByCustomerId, getBudgetById } from "@/lib/mock-data"
+import { mockCustomers, mockBudgets, getVehiclesByCustomerId, getBudgetById, mockInventory, getInventoryById } from "@/lib/mock-data"
 import type { ServiceItem, PartItem } from "@/lib/types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -32,7 +32,7 @@ export function NewOrderForm() {
     { id: "1", description: "", quantity: 1, unitPrice: 0, total: 0 },
   ])
   const [parts, setParts] = useState<PartItem[]>([
-    { id: "1", description: "", partNumber: "", quantity: 1, unitPrice: 0, total: 0 },
+    { id: "1", description: "", partNumber: "", quantity: 1, unitPrice: 0, total: 0, inventoryId: undefined },
   ])
 
   const vehicles = customerId ? getVehiclesByCustomerId(customerId) : []
@@ -106,11 +106,35 @@ export function NewOrderForm() {
     )
   }
 
+  const updatePartWithInventory = (id: string, inventoryId: string) => {
+    const inventoryItem = getInventoryById(inventoryId);
+    if (inventoryItem) {
+      setParts(
+        parts.map((p) => {
+          if (p.id === id) {
+            const updated = {
+              ...p,
+              inventoryId: inventoryItem.id,
+              description: inventoryItem.name,
+              partNumber: inventoryItem.sku,
+              unitPrice: inventoryItem.unitPrice,
+            };
+            updated.total = Number(updated.quantity) * Number(updated.unitPrice);
+            return updated;
+          }
+          return p;
+        }),
+      );
+    }
+  }
+
   const total = [...services, ...parts].reduce((sum, item) => sum + item.total, 0)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, this would save to a database
+    
+    // For demo purposes, we'll just log the order. In a real app, this would save to a database
+    // and reduce inventory quantities accordingly
     console.log("New order:", {
       budgetId,
       customerId,
@@ -123,6 +147,17 @@ export function NewOrderForm() {
       mechanicNotes,
       total,
     })
+    
+    // Log inventory reductions for demo
+    parts.forEach(part => {
+      if (part.inventoryId) {
+        const inventoryItem = getInventoryById(part.inventoryId);
+        if (inventoryItem) {
+          console.log(`Would reduce inventory for ${inventoryItem.name} by ${part.quantity}`);
+        }
+      }
+    });
+    
     router.push("/orders")
   }
 
@@ -348,12 +383,32 @@ export function NewOrderForm() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label>Peça do Estoque</Label>
+                    <Select
+                      value={part.inventoryId || ""}
+                      onValueChange={(value) => updatePartWithInventory(part.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma peça do estoque" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {mockInventory.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Descrição *</Label>
                     <Input
                       value={part.description}
                       onChange={(e) => updatePart(part.id, "description", e.target.value)}
                       placeholder="Ex: Jogo de juntas do motor"
                       required
+                      disabled={!!part.inventoryId}
                     />
                   </div>
 
@@ -363,6 +418,7 @@ export function NewOrderForm() {
                       value={part.partNumber}
                       onChange={(e) => updatePart(part.id, "partNumber", e.target.value)}
                       placeholder="Ex: JG-001"
+                      disabled={!!part.inventoryId}
                     />
                   </div>
 
