@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, FileText, Users, Wrench, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/components/auth-provider"
 
 const navItems = [
   { href: "/", label: "Início", icon: Home },
@@ -16,11 +15,6 @@ const navItems = [
 
 export function MobileNav() {
   const pathname = usePathname()
-  const { user } = useAuth()
-
-  if (!user || pathname === "/login" || pathname === "/register") {
-    return null
-  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom">
