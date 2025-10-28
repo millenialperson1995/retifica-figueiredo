@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 import { MobileNav } from "@/components/mobile-nav"
 import { Toaster } from "@/components/ui/toaster"
@@ -19,12 +20,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
-        {children}
-        <MobileNav />
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="pt-BR">
+        <body className={inter.className}>
+          {children}
+          <MobileNav />
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
