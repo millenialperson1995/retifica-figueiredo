@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
 import { ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
-import { mockCustomers, mockBudgets, getVehiclesByCustomerId, getBudgetById, mockInventory, getInventoryById, getActiveStandardServices } from "@/lib/mock-data";
-import type { ServiceItem, PartItem, StandardService } from "@/lib/types";
+import type { ServiceItem, PartItem, StandardService, Customer, Vehicle, InventoryItem } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Spinner } from "../ui/spinner";
 
 interface OrderFormProps {
   isEditing?: boolean;
@@ -25,6 +25,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
   const searchParams = useSearchParams();
   const preselectedBudgetId = searchParams.get("budgetId");
 
+  // Form State
   const [budgetId, setBudgetId] = useState(preselectedBudgetId || "none");
   const [customerId, setCustomerId] = useState("");
   const [vehicleId, setVehicleId] = useState("");
@@ -35,28 +36,108 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [parts, setParts] = useState<PartItem[]>([]);
 
-  const standardServices = getActiveStandardServices();
-  const vehicles = customerId ? getVehiclesByCustomerId(customerId) : [];
+  // Data State
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [allVehicles, setAllVehicles] = useState<any[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [standardServices, setStandardServices] = useState<any[]>([]);
+  
+  // UI State
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all required data from APIs on component mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      // Don't set loading to true if a budget is being loaded, as it has its own loading state
+      if (!preselectedBudgetId) {
+        setIsLoading(true);
+      }
+      setError(null);
+      try {
+        const [customersRes, vehiclesRes, inventoryRes, servicesRes] = await Promise.all([
+          fetch('/api/customers'),
+          fetch('/api/vehicles'),
+          fetch('/api/inventory'),
+          fetch('/api/services'),
+        ]);
+
+        if (!customersRes.ok || !vehiclesRes.ok || !inventoryRes.ok || !servicesRes.ok) {
+          throw new Error('Failed to fetch initial data');
+        }
+
+        const customersData = await customersRes.json();
+        const vehiclesData = await vehiclesRes.json();
+        const inventoryData = await inventoryRes.json();
+        const servicesData = await servicesRes.json();
+
+        setCustomers(customersData);
+        setAllVehicles(vehiclesData);
+        setInventoryItems(inventoryData);
+        setStandardServices(servicesData.filter((s: any) => s.isActive));
+
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        if (!preselectedBudgetId) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchInitialData();
+  }, [preselectedBudgetId]);
 
   // Load budget data if budgetId is provided
   useEffect(() => {
-    if (budgetId) {
-      const budget = getBudgetById(budgetId);
-      if (budget) {
-        setCustomerId(budget.customerId);
-        setVehicleId(budget.vehicleId);
-        setServices(budget.services);
-        setParts(budget.parts);
-        if (budget.notes) setNotes(budget.notes);
-      }
+    if (budgetId && budgetId !== "none") {
+      const fetchBudget = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const response = await fetch(`/api/budgets/${budgetId}`);
+          if (!response.ok) {
+            throw new Error('Budget not found');
+          }
+          const budget = await response.json();
+          if (budget) {
+            setCustomerId(budget.customerId);
+            setVehicleId(budget.vehicleId);
+            setServices(budget.services || []);
+            setParts(budget.parts || []);
+            if (budget.notes) setNotes(budget.notes);
+          }
+        } catch (error) {
+          console.error("Failed to fetch budget:", error);
+          setError("Failed to load budget data.");
+          setBudgetId("none"); // Reset if budget is not found
+        } finally {
+            setIsLoading(false);
+        }
+      };
+      fetchBudget();
+    } else {
+      // If there's no budgetId, we can stop the main loading state
+      setIsLoading(false);
     }
   }, [budgetId]);
 
+  // Derived state for vehicles based on selected customer
+  const vehicles = customerId ? allVehicles.filter(v => v.customerId === customerId) : [];
+
   useEffect(() => {
-    if (customerId && vehicles.length > 0 && !vehicleId) {
-      setVehicleId(vehicles[0].id);
+    // If a customer is selected and they have vehicles, but no vehicle is selected yet,
+    // default to the first vehicle in their list.
+    if (customerId && !vehicleId && vehicles.length > 0) {
+      setVehicleId(vehicles[0]._id);
+    }
+    // If the customer changes and the previously selected vehicle doesn't belong to them,
+    // reset the vehicleId.
+    if (customerId && vehicleId && !vehicles.some(v => v._id === vehicleId)) {
+        setVehicleId("");
     }
   }, [customerId, vehicles, vehicleId]);
+
 
   const addService = () => {
     setServices([...services, { id: Date.now().toString(), description: "", quantity: 1, unitPrice: 0, total: 0 }]);
@@ -81,7 +162,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
     );
   };
 
-  const addStandardService = (standardService: StandardService) => {
+  const addStandardService = (standardService: any) => {
     const newServiceItem: ServiceItem = {
       id: `std-${Date.now()}`,
       description: standardService.name,
@@ -118,15 +199,15 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
     );
   };
 
-  const updatePartWithInventory = (id: string, inventoryId: string) => {
-    const inventoryItem = getInventoryById(inventoryId);
+  const updatePartWithInventory = (partId: string, inventoryId: string) => {
+    const inventoryItem = inventoryItems.find(i => i._id === inventoryId);
     if (inventoryItem) {
       setParts(
         parts.map((p) => {
-          if (p.id === id) {
+          if (p.id === partId) {
             const updated = {
               ...p,
-              inventoryId: inventoryItem.id,
+              inventoryId: inventoryItem._id,
               description: inventoryItem.name,
               partNumber: inventoryItem.sku,
               unitPrice: inventoryItem.unitPrice,
@@ -142,13 +223,11 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
 
   const total = [...services, ...parts].reduce((sum, item) => sum + item.total, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For demo purposes, we'll just log the order. In a real app, this would save to a database
-    // and reduce inventory quantities accordingly
-    console.log("New order:", {
-      budgetId,
+    const orderData = {
+      budgetId: budgetId === "none" ? undefined : budgetId,
       customerId,
       vehicleId,
       startDate,
@@ -158,20 +237,46 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       notes,
       mechanicNotes,
       total,
-    });
-    
-    // Log inventory reductions for demo
-    parts.forEach(part => {
-      if (part.inventoryId) {
-        const inventoryItem = getInventoryById(part.inventoryId);
-        if (inventoryItem) {
-          console.log(`Would reduce inventory for ${inventoryItem.name} by ${part.quantity}`);
-        }
+      status: 'pending', // default status
+    };
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
       }
-    });
-    
-    router.push("/orders");
+
+      router.push("/orders");
+
+    } catch (error) {
+      console.error("Submission error:", error);
+      setError("Failed to create the order. Please try again.");
+    }
   };
+
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <Spinner className="w-10 h-10" />
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen text-red-500">
+            <p className="mb-4">{error}</p>
+            <Button onClick={() => router.back()}>Go Back</Button>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-20">
@@ -189,39 +294,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Budget Selection (Optional) */}
-          {!preselectedBudgetId && !isEditing && budgetId === "none" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Orçamento (Opcional)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Selecionar Orçamento Aprovado</Label>
-                  <Select value={budgetId} onValueChange={setBudgetId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Nenhum (criar do zero)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum (criar do zero)</SelectItem>
-                      {mockBudgets
-                        .filter((b) => b.status === "approved")
-                        .map((budget) => (
-                          <SelectItem key={budget.id} value={budget.id}>
-                            Orçamento #{budget.id} -{" "}
-                            {budget.total.toLocaleString("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            })}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Customer and Vehicle Selection */}
           <Card>
             <CardHeader>
@@ -230,13 +302,24 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="customer">Cliente *</Label>
-                <Select value={customerId} onValueChange={setCustomerId} required disabled={!!budgetId}>
+                <Select
+                  value={customerId}
+                  onValueChange={(value) => {
+                    setCustomerId(value);
+                    setVehicleId(''); // Reset vehicle when customer changes
+                  }}
+                  required
+                  disabled={!!preselectedBudgetId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockCustomers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
+                    {customers.map((customer) => (
+                      <SelectItem
+                        key={customer._id}
+                        value={customer._id}
+                      >
                         {customer.name}
                       </SelectItem>
                     ))}
@@ -244,16 +327,19 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                 </Select>
               </div>
 
-              {customerId && vehicles.length > 0 && (
+              {customerId && (
                 <div className="space-y-2">
                   <Label htmlFor="vehicle">Veículo *</Label>
-                  <Select value={vehicleId} onValueChange={setVehicleId} required disabled={!!budgetId}>
+                  <Select value={vehicleId} onValueChange={setVehicleId} required disabled={!!preselectedBudgetId || vehicles.length === 0}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um veículo" />
+                      <SelectValue placeholder={vehicles.length === 0 ? "Nenhum veículo encontrado" : "Selecione um veículo"} />
                     </SelectTrigger>
                     <SelectContent>
                       {vehicles.map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                        <SelectItem 
+                          key={vehicle._id} 
+                          value={vehicle._id}
+                        >
                           {vehicle.brand} {vehicle.model} - {vehicle.plate}
                         </SelectItem>
                       ))}
@@ -301,7 +387,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
               <CardTitle className="text-base">Serviços</CardTitle>
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Select onValueChange={(value) => {
-                  const selectedService = standardServices.find(s => s.id === value);
+                  const selectedService = standardServices.find(s => s._id === value);
                   if (selectedService) {
                     addStandardService(selectedService);
                   }
@@ -311,7 +397,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {standardServices.map((service) => (
-                      <SelectItem key={service.id} value={service.id} className="flex items-center">
+                      <SelectItem key={service._id} value={service._id} className="flex items-center">
                         <Wrench className="w-4 h-4 mr-2" />
                         {service.name}
                       </SelectItem>
@@ -327,7 +413,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
             <CardContent className="space-y-4">
               {services.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
-                  Nenhum serviço adicionado. Clique em "Adicionar Manual" ou selecione um "serviço padrão" para começar.
+                  Nenhum serviço adicionado.
                 </div>
               ) : (
                 services.map((service, index) => (
@@ -344,7 +430,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
-
                     <div className="space-y-2">
                       <Label>Descrição *</Label>
                       <Input
@@ -354,7 +439,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                         required
                       />
                     </div>
-
                     <div className="grid grid-cols-3 gap-3">
                       <div className="space-y-2">
                         <Label>Qtd *</Label>
@@ -380,10 +464,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                       <div className="space-y-2">
                         <Label>Total</Label>
                         <Input
-                          value={service.total.toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
+                          value={service.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           disabled
                         />
                       </div>
@@ -406,7 +487,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
             <CardContent className="space-y-4">
               {parts.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
-                  Nenhuma peça adicionada. Clique em "Adicionar" para começar.
+                  Nenhuma peça adicionada.
                 </div>
               ) : (
                 parts.map((part, index) => (
@@ -423,7 +504,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
-
                     <div className="space-y-2">
                       <Label>Peça do Estoque</Label>
                       <Select
@@ -434,15 +514,14 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                           <SelectValue placeholder="Selecione uma peça do estoque" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockInventory.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
+                          {inventoryItems.map((item) => (
+                            <SelectItem key={item._id} value={item._id}>
                               {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="space-y-2">
                       <Label>Descrição *</Label>
                       <Input
@@ -453,7 +532,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                         disabled={!!part.inventoryId}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label>Código da Peça</Label>
                       <Input
@@ -463,7 +541,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                         disabled={!!part.inventoryId}
                       />
                     </div>
-
                     <div className="grid grid-cols-3 gap-3">
                       <div className="space-y-2">
                         <Label>Qtd *</Label>
@@ -489,10 +566,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                       <div className="space-y-2">
                         <Label>Total</Label>
                         <Input
-                          value={part.total.toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
+                          value={part.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           disabled
                         />
                       </div>
@@ -516,7 +590,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   rows={3}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="mechanicNotes">Anotações do Mecânico</Label>
                 <Textarea
@@ -527,16 +600,10 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   rows={3}
                 />
               </div>
-
               <div className="pt-4 border-t border-border">
                 <div className="flex items-center justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span>
-                    {total.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </span>
+                  <span>{total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                 </div>
               </div>
             </CardContent>
@@ -548,7 +615,8 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                 Cancelar
               </Button>
             </Link>
-            <Button type="submit" className="flex-1" disabled={!customerId || !vehicleId || !estimatedEndDate}>
+            <Button type="submit" className="flex-1" disabled={!customerId || !vehicleId || !estimatedEndDate || isLoading}>
+              {isLoading ? <Spinner className="w-4 h-4 mr-2" /> : null}
               {isEditing ? "Atualizar" : "Criar"} Ordem de Serviço
             </Button>
           </div>
