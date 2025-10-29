@@ -1,30 +1,179 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { FileText, Wrench, Users, TrendingUp, Plus, Calendar, Clock } from "lucide-react"
-import { mockBudgets, mockOrders, mockCustomers, getCustomerById, getVehicleById } from "@/lib/mock-data"
+import { apiService } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { AppHeader } from "@/components/app-header"
+import AuthGuard from "@/components/auth-guard";
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  userId: string;
+  createdAt: Date;
+}
+
+interface Vehicle {
+  id: string;
+  customerId: string;
+  plate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  engineNumber?: string;
+  chassisNumber?: string;
+  notes?: string;
+  userId: string;
+}
+
+interface ServiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+interface PartItem {
+  id: string;
+  description: string;
+  partNumber?: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  inventoryId?: string;
+}
+
+interface Budget {
+  id: string;
+  customerId: string;
+  vehicleId: string;
+  date: Date;
+  status: "pending" | "approved" | "rejected";
+  userId: string;
+  services: ServiceItem[];
+  parts: PartItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  notes?: string;
+}
+
+interface Order {
+  id: string;
+  budgetId: string;
+  customerId: string;
+  vehicleId: string;
+  startDate: Date;
+  estimatedEndDate: Date;
+  actualEndDate?: Date;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
+  userId: string;
+  services: ServiceItem[];
+  parts: PartItem[];
+  total: number;
+  notes?: string;
+  mechanicNotes?: string;
+}
 
 export default function HomePage() {
-  const pendingBudgets = mockBudgets.filter((b) => b.status === "pending").length
-  const approvedBudgets = mockBudgets.filter((b) => b.status === "approved").length
-  const inProgressOrders = mockOrders.filter((o) => o.status === "in-progress").length
-  const completedOrders = mockOrders.filter((o) => o.status === "completed").length
-  const totalBudgets = mockBudgets.length
-  const totalCustomers = mockCustomers.length
-  const monthlyRevenue = mockBudgets.filter((b) => b.status === "approved").reduce((sum, b) => sum + b.total, 0)
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
+  );
+}
+
+function DashboardContent() {
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [budgetsData, ordersData, customersData] = await Promise.all([
+          apiService.getBudgets(),
+          apiService.getOrders(),
+          apiService.getCustomers()
+        ]);
+        
+        // Converter datas para objetos Date
+        const formattedBudgets = budgetsData.map(budget => ({
+          ...budget,
+          date: new Date(budget.date)
+        }));
+        
+        const formattedOrders = ordersData.map(order => ({
+          ...order,
+          startDate: new Date(order.startDate),
+          estimatedEndDate: new Date(order.estimatedEndDate)
+        }));
+        
+        setBudgets(formattedBudgets);
+        setOrders(formattedOrders);
+        setCustomers(customersData);
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Carregando dados...</div>
+      </div>
+    );
+  }
+
+  const pendingBudgets = budgets.filter((b) => b.status === "pending").length
+  const approvedBudgets = budgets.filter((b) => b.status === "approved").length
+  const inProgressOrders = orders.filter((o) => o.status === "in-progress").length
+  const completedOrders = orders.filter((o) => o.status === "completed").length
+  const totalBudgets = budgets.length
+  const totalCustomers = customers.length
+  const monthlyRevenue = budgets.filter((b) => b.status === "approved").reduce((sum, b) => sum + b.total, 0)
 
   // Recent activity - combine budgets and orders
-  const recentBudgets = mockBudgets
-    .slice()
+  const recentBudgets = [...budgets]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 3)
-  const recentOrders = mockOrders
-    .slice()
+  const recentOrders = [...orders]
     .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
     .slice(0, 3)
+
+  // Função para obter cliente por ID
+  const getCustomerById = (id: string) => customers.find(c => c.id === id);
+
+  // Função para obter veículo por ID (você precisará implementar isso no futuro)
+  const getVehicleById = (id: string) => {
+    // Este é apenas um placeholder - em uma implementação completa, você buscaria o veículo
+    return {
+      id,
+      plate: 'ABC-1234', // placeholder
+      brand: 'N/A', // placeholder
+      model: 'N/A', // placeholder
+    } as any as Vehicle;
+  };
 
   return (
     <>

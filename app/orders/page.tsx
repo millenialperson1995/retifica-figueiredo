@@ -1,14 +1,122 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { Plus, Calendar, User, Car, Clock, WrenchIcon } from "lucide-react"
-import { mockOrders, getCustomerById, getVehicleById } from "@/lib/mock-data"
+import { apiService } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { AppHeader } from "@/components/app-header"
 import { EmptyState } from "@/components/empty-state"
+import AuthGuard from "@/components/auth-guard";
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  userId: string;
+  createdAt: Date;
+}
+
+interface Vehicle {
+  id: string;
+  customerId: string;
+  plate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  engineNumber?: string;
+  chassisNumber?: string;
+  notes?: string;
+  userId: string;
+}
+
+interface ServiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+interface PartItem {
+  id: string;
+  description: string;
+  partNumber?: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  inventoryId?: string;
+}
+
+interface Order {
+  id: string;
+  budgetId: string;
+  customerId: string;
+  vehicleId: string;
+  startDate: Date;
+  estimatedEndDate: Date;
+  actualEndDate?: Date;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
+  userId: string;
+  services: ServiceItem[];
+  parts: PartItem[];
+  total: number;
+  notes?: string;
+  mechanicNotes?: string;
+}
 
 export default function OrdersPage() {
+  return (
+    <AuthGuard>
+      <OrdersContent />
+    </AuthGuard>
+  );
+}
+
+function OrdersContent() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const ordersData = await apiService.getOrders();
+        // Converter datas para objetos Date
+        const formattedOrders = ordersData.map(order => ({
+          ...order,
+          startDate: new Date(order.startDate),
+          estimatedEndDate: new Date(order.estimatedEndDate),
+          actualEndDate: order.actualEndDate ? new Date(order.actualEndDate) : undefined
+        }));
+        setOrders(formattedOrders);
+      } catch (error) {
+        console.error('Erro ao buscar ordens de serviço:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Carregando ordens de serviço...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <AppHeader />
@@ -24,7 +132,7 @@ export default function OrdersPage() {
             </Link>
           </div>
 
-          {mockOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <Card>
               <CardContent className="p-0">
                 <EmptyState
@@ -38,10 +146,8 @@ export default function OrdersPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {mockOrders.map((order) => {
-                const customer = getCustomerById(order.customerId)
-                const vehicle = getVehicleById(order.vehicleId)
-
+              {orders.map((order) => {
+                // Obter cliente e veículo de forma assíncrona (em uma implementação real, você buscaria todos de uma vez)
                 return (
                   <Link key={order.id} href={`/orders/${order.id}`}>
                     <Card className="hover:bg-accent/50 transition-colors">
@@ -88,12 +194,12 @@ export default function OrdersPage() {
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 text-sm">
                             <User className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{customer?.name}</span>
+                            <span className="text-muted-foreground">{/* customer?.name */ "Cliente temporário"}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Car className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-muted-foreground">
-                              {vehicle?.brand} {vehicle?.model} - {vehicle?.plate}
+                              {/* vehicle?.brand */ "Veículo"} {/* vehicle?.model */ "temporário"} - {/* vehicle?.plate */ "ABC-1234"}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">

@@ -8,6 +8,7 @@ export interface Customer {
   city: string
   state: string
   zipCode: string
+  userId: string // ID do usuário proprietário
   createdAt: Date
 }
 
@@ -22,6 +23,7 @@ export interface Vehicle {
   engineNumber?: string
   chassisNumber?: string
   notes?: string
+  userId: string // ID do usuário proprietário
 }
 
 export interface ServiceItem {
@@ -40,6 +42,7 @@ export interface StandardService {
   category?: string
   basePrice: number
   isActive: boolean
+  userId: string // ID do usuário proprietário
   createdAt: Date
   updatedAt: Date
 }
@@ -60,6 +63,7 @@ export interface Budget {
   vehicleId: string
   date: Date
   status: "pending" | "approved" | "rejected"
+  userId: string // ID do usuário proprietário
   services: ServiceItem[]
   parts: PartItem[]
   subtotal: number
@@ -79,6 +83,7 @@ export interface InventoryItem {
   unitPrice: number
   supplier?: string
   notes?: string
+  userId: string // ID do usuário proprietário
   createdAt: Date
   updatedAt: Date
 }
@@ -92,6 +97,7 @@ export interface Order {
   estimatedEndDate: Date
   actualEndDate?: Date
   status: "pending" | "in-progress" | "completed" | "cancelled"
+  userId: string // ID do usuário proprietário
   services: ServiceItem[]
   parts: PartItem[]
   total: number

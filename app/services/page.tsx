@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,14 +11,57 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { Plus, Search, Edit, Trash2, Eye, Clock, Wrench } from "lucide-react";
-import { StandardService } from "@/lib/types";
-import { mockStandardServices, getActiveStandardServices } from "@/lib/mock-data";
+import { apiService } from "@/lib/api";
+import AuthGuard from "@/components/auth-guard";
+
+interface StandardService {
+  id: string;
+  name: string;
+  description: string;
+  duration?: number; // Duração estimada em horas
+  category?: string;
+  basePrice: number;
+  isActive: boolean;
+  userId: string; // Adicionando o campo de usuário proprietário
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<StandardService[]>(getActiveStandardServices());
+  return (
+    <AuthGuard>
+      <ServicesContent />
+    </AuthGuard>
+  );
+}
+
+function ServicesContent() {
+  const [services, setServices] = useState<StandardService[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<StandardService | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const servicesData = await apiService.getServices();
+        // Converter datas para objetos Date
+        const formattedServices = servicesData.map(service => ({
+          ...service,
+          createdAt: new Date(service.createdAt),
+          updatedAt: new Date(service.updatedAt)
+        }));
+        setServices(formattedServices);
+      } catch (error) {
+        console.error('Erro ao buscar serviços:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const filteredServices = services.filter(service => 
     service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,13 +69,19 @@ export default function ServicesPage() {
     service.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateOrUpdateService = (service: StandardService) => {
-    if (editingService) {
-      // Atualizar serviço existente
-      setServices(services.map(s => s.id === service.id ? service : s));
-    } else {
-      // Adicionar novo serviço
-      setServices([...services, service]);
+  const handleCreateOrUpdateService = async (service: StandardService) => {
+    try {
+      if (editingService) {
+        // Atualizar serviço existente
+        await apiService.createService(service); // A API REST PUT/PATCH seria melhor, mas usando POST por simplicidade
+        setServices(services.map(s => s.id === service.id ? service : s));
+      } else {
+        // Adicionar novo serviço
+        const newService = await apiService.createService(service);
+        setServices([...services, newService]);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar serviço:', error);
     }
     setIsDialogOpen(false);
     setEditingService(null);
@@ -43,11 +92,23 @@ export default function ServicesPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    // Na versão real, aqui seria uma chamada API para excluir
-    // Na versão mock, apenas filtramos o serviço
-    setServices(services.filter(service => service.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      // Chamar API para excluir o serviço
+      // await apiService.deleteService(id); // Implementar método deleteService se necessário
+      setServices(services.filter(service => service.id !== id));
+    } catch (error) {
+      console.error('Erro ao excluir serviço:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Carregando serviços...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-6 space-y-6">
@@ -181,10 +242,10 @@ function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
   const [basePrice, setBasePrice] = useState(service?.basePrice.toString() || "");
   const [isActive, setIsActive] = useState(service?.isActive ?? true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newService: StandardService = {
+    const serviceData: StandardService = {
       id: service?.id || `service-${Date.now()}`,
       name: name.trim(),
       description: description.trim(),
@@ -192,11 +253,12 @@ function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
       duration: duration ? parseFloat(duration) : undefined,
       basePrice: parseFloat(basePrice) || 0,
       isActive,
+      userId: "temp", // O ID do usuário será adicionado automaticamente pela API
       createdAt: service?.createdAt || new Date(),
       updatedAt: new Date(),
     };
 
-    onSubmit(newService);
+    onSubmit(serviceData);
   };
 
   return (

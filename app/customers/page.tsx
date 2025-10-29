@@ -1,13 +1,93 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { Plus, Phone, Mail, Car, UsersIcon } from "lucide-react"
-import { mockCustomers, getVehiclesByCustomerId } from "@/lib/mock-data"
+import { apiService } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { EmptyState } from "@/components/empty-state"
+import AuthGuard from "@/components/auth-guard";
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  userId: string;
+  createdAt: Date;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  userId: string;
+  createdAt: Date;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  userId: string;
+  createdAt: Date;
+}
 
 export default function CustomersPage() {
+  return (
+    <AuthGuard>
+      <CustomersContent />
+    </AuthGuard>
+  );
+}
+
+function CustomersContent() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const customersData = await apiService.getCustomers();
+        setCustomers(customersData);
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Carregando clientes...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <AppHeader />
@@ -23,7 +103,7 @@ export default function CustomersPage() {
             </Link>
           </div>
 
-          {mockCustomers.length === 0 ? (
+          {customers.length === 0 ? (
             <Card>
               <CardContent className="p-0">
                 <EmptyState
@@ -37,8 +117,10 @@ export default function CustomersPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {mockCustomers.map((customer) => {
-                const vehicles = getVehiclesByCustomerId(customer.id)
+              {customers.map((customer) => {
+                // Note: Para uma implementação completa, você buscaria os veículos associados
+                // Por enquanto, usaremos um placeholder
+                const vehicleCount = 0; // Este valor viria de uma chamada à API de veículos
                 return (
                   <Link key={customer.id} href={`/customers/${customer.id}`}>
                     <Card className="hover:bg-accent/50 transition-colors">
@@ -58,7 +140,7 @@ export default function CustomersPage() {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Car className="w-3.5 h-3.5" />
                                 <span>
-                                  {vehicles.length} {vehicles.length === 1 ? "veículo" : "veículos"}
+                                  {vehicleCount} {vehicleCount === 1 ? "veículo" : "veículos"}
                                 </span>
                               </div>
                             </div>
