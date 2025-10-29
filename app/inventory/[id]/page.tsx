@@ -14,8 +14,10 @@ interface InventoryItemPageProps {
   };
 }
 
-export default function InventoryItemPage({ params }: InventoryItemPageProps) {
-  const item = getInventoryById(params.id);
+export default async function InventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
+  const item = getInventoryById(id);
 
   if (!item) {
     notFound();
@@ -37,7 +39,7 @@ export default function InventoryItemPage({ params }: InventoryItemPageProps) {
                 Voltar para Estoque
               </Button>
             </Link>
-            <Link href={`/inventory/${params.id}/edit`}>
+            <Link href={`/inventory/${id}/edit`}>
               <Button>
                 Editar Item
               </Button>

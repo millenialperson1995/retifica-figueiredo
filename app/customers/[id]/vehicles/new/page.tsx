@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,9 +10,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
-export default function NewVehiclePage({ params }: { params: { id: string } }) {
+export default function NewVehiclePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
+  const { id } = resolvedParams;
   const router = useRouter()
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     plate: "",
     brand: "",
@@ -25,12 +27,61 @@ export default function NewVehiclePage({ params }: { params: { id: string } }) {
     chassisNumber: "",
     notes: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, this would save to a database
-    console.log("New vehicle:", formData)
-    router.push(`/customers/${params.id}`)
+    setIsSubmitting(true)
+    
+    try {
+      // Create a new vehicle object with form data
+      const vehicleData = {
+        customerId: id, // Use the customer ID from params
+        plate: formData.plate,
+        brand: formData.brand,
+        model: formData.model,
+        year: parseInt(formData.year),
+        color: formData.color,
+        engineNumber: formData.engineNumber,
+        chassisNumber: formData.chassisNumber,
+        notes: formData.notes,
+      }
+      
+      // Send the vehicle data to the API
+      const response = await fetch('/api/vehicles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vehicleData),
+      })
+      
+      if (response.ok) {
+        toast({
+          title: "Sucesso!",
+          description: "Veículo cadastrado com sucesso!",
+        })
+        // Redirect back to the customer page
+        router.push(`/customers/${id}`)
+        router.refresh() // Refresh to show the new vehicle
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Erro!",
+          description: errorData.message || "Erro ao cadastrar veículo",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error creating vehicle:", error)
+      toast({
+        title: "Erro!",
+        description: "Erro de conexão ao cadastrar veículo",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -44,7 +95,7 @@ export default function NewVehiclePage({ params }: { params: { id: string } }) {
     <div className="min-h-screen pb-20">
       <div className="container max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <Link href={`/customers/${params.id}`}>
+          <Link href={`/customers/${id}`}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -157,13 +208,13 @@ export default function NewVehiclePage({ params }: { params: { id: string } }) {
           </Card>
 
           <div className="flex gap-3 mt-6">
-            <Link href={`/customers/${params.id}`} className="flex-1">
-              <Button type="button" variant="outline" className="w-full bg-transparent">
+            <Link href={`/customers/${id}`} className="flex-1">
+              <Button type="button" variant="outline" className="w-full bg-transparent" disabled={isSubmitting}>
                 Cancelar
               </Button>
             </Link>
-            <Button type="submit" className="flex-1">
-              Salvar Veículo
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting ? "Salvando..." : "Salvar Veículo"}
             </Button>
           </div>
         </form>

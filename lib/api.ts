@@ -40,6 +40,10 @@ class ApiService {
     return this.request('/customers');
   }
 
+  async getCustomerById(id: string): Promise<any> {
+    return this.request(`/customers/${id}`);
+  }
+
   async createCustomer(customerData: any): Promise<any> {
     return this.request('/customers', {
       method: 'POST',
@@ -63,6 +67,10 @@ class ApiService {
   // Vehicle API methods
   async getVehicles(): Promise<any[]> {
     return this.request('/vehicles');
+  }
+
+  async getVehicleById(id: string): Promise<any> {
+    return this.request(`/vehicles/${id}`);
   }
 
   async createVehicle(vehicleData: any): Promise<any> {

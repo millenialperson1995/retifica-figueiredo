@@ -1,19 +1,53 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { useParams, notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, FileText } from "lucide-react"
-import { getVehicleById, mockBudgets, mockOrders } from "@/lib/mock-data"
+import { apiService } from "@/lib/api";
 
-export default function VehicleDetailPage({ params }: { params: { id: string; vehicleId: string } }) {
-  const vehicle = getVehicleById(params.vehicleId)
-  const vehicleBudgets = mockBudgets.filter((b) => b.vehicleId === params.vehicleId)
-  const vehicleOrders = mockOrders.filter((o) => o.vehicleId === params.vehicleId)
+export default function VehicleDetailPage() {
+  const params = useParams<{ id: string, vehicleId: string }>();
+  const [vehicle, setVehicle] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      try {
+        if (params.vehicleId) {
+          const data = await apiService.getVehicleById(params.vehicleId);
+          setVehicle(data);
+        }
+      } catch (error) {
+        console.error("Error fetching vehicle:", error);
+        // Handle the error appropriately, maybe redirect or show an error page
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicle();
+  }, [params.vehicleId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando veículo...</p>
+      </div>
+    );
+  }
 
   if (!vehicle) {
-    notFound()
+    notFound();
   }
+
+  // For now using mock data for budgets and orders until those APIs are enhanced
+  const { mockBudgets, mockOrders } = require("@/lib/mock-data");
+  const vehicleBudgets = mockBudgets.filter((b) => b.vehicleId === params.vehicleId)
+  const vehicleOrders = mockOrders.filter((o) => o.vehicleId === params.vehicleId)
 
   return (
     <div className="min-h-screen pb-20">

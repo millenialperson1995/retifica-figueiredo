@@ -1,18 +1,54 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { useParams, notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, Phone, Mail, MapPin, FileText, Plus, Car } from "lucide-react"
-import { getCustomerById, getVehiclesByCustomerId, mockBudgets } from "@/lib/mock-data"
+import { apiService } from "@/lib/api"
+import type { Customer } from "@/lib/types"
 
-export default function CustomerDetailPage({ params }: { params: { id: string } }) {
-  const customer = getCustomerById(params.id)
-  const vehicles = getVehiclesByCustomerId(params.id)
-  const customerBudgets = mockBudgets.filter((b) => b.customerId === params.id)
+export default function CustomerDetailPage() {
+  const params = useParams<{ id: string }>();
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (params.id) {
+      const fetchData = async () => {
+        try {
+          // Fetch customer
+          const customerData = await apiService.getCustomerById(params.id);
+          setCustomer(customerData);
+          
+          // Fetch all vehicles and filter by customer ID
+          const allVehicles = await apiService.getVehicles();
+          const customerVehicles = allVehicles.filter(v => v.customerId === params.id);
+          setVehicles(customerVehicles);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          setCustomer(null); // Set to null to trigger notFound
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando cliente...</p>
+      </div>
+    );
+  }
 
   if (!customer) {
-    notFound()
+    notFound();
   }
 
   return (
@@ -39,7 +75,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             </div>
             <div className="flex items-center gap-3">
               <Mail className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">{customer.email}</span>
+              <span className="text-sm">{customer.email || 'N/A'}</span>
             </div>
             <div className="flex items-center gap-3">
               <FileText className="w-4 h-4 text-muted-foreground" />
@@ -69,26 +105,25 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             </Link>
           </CardHeader>
           <CardContent>
-            {vehicles.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhum veículo cadastrado</p>
-            ) : (
+            {vehicles.length > 0 ? (
               <div className="space-y-3">
                 {vehicles.map((vehicle) => (
-                  <Link key={vehicle.id} href={`/customers/${params.id}/vehicles/${vehicle.id}`}>
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
-                      <Car className="w-5 h-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">
-                          {vehicle.brand} {vehicle.model} ({vehicle.year})
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {vehicle.plate} • {vehicle.color}
-                        </div>
+                  <Link 
+                    key={vehicle._id || vehicle.id} 
+                    href={`/customers/${params.id}/vehicles/${vehicle._id || vehicle.id}`}
+                    className="block"
+                  >
+                    <div className="p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                      <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Placa: {vehicle.plate} • Ano: {vehicle.year}
                       </div>
                     </div>
                   </Link>
                 ))}
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum veículo cadastrado</p>
             )}
           </CardContent>
         </Card>
@@ -99,45 +134,8 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             <CardTitle className="text-base">Orçamentos Recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            {customerBudgets.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhum orçamento encontrado</p>
-            ) : (
-              <div className="space-y-3">
-                {customerBudgets.slice(0, 5).map((budget) => (
-                  <Link key={budget.id} href={`/budgets/${budget.id}`}>
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
-                      <div>
-                        <div className="font-medium text-sm">Orçamento #{budget.id}</div>
-                        <div className="text-xs text-muted-foreground">{budget.date.toLocaleDateString("pt-BR")}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-sm">
-                          {budget.total.toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
-                        </div>
-                        <div
-                          className={`text-xs ${
-                            budget.status === "approved"
-                              ? "text-green-600"
-                              : budget.status === "rejected"
-                                ? "text-red-600"
-                                : "text-yellow-600"
-                          }`}
-                        >
-                          {budget.status === "approved"
-                            ? "Aprovado"
-                            : budget.status === "rejected"
-                              ? "Rejeitado"
-                              : "Pendente"}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground text-center py-4">Nenhum orçamento encontrado</p>
+            {/* TODO: Implement budget listing once API is ready */}
           </CardContent>
         </Card>
 
