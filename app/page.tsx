@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
-import { FileText, Wrench, Users, TrendingUp, Plus, Calendar, Clock } from "lucide-react"
+import { FileText, Wrench, Users, TrendingUp, Plus, Calendar, Clock, BarChart3, PieChart } from "lucide-react"
 import { apiService } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { AppHeader } from "@/components/app-header"
@@ -186,259 +186,399 @@ function DashboardContent() {
   return (
     <>
       <AppHeader />
-      <div className="min-h-screen pb-20">
-        <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
-          <PageHeader title="Dashboard" description="Visão geral do seu negócio" />
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="container max-w-6xl mx-auto px-4 py-6 space-y-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-2">Visão geral do seu negócio</p>
+          </div>
 
           {/* Main Stats Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Receita Mensal
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {monthlyRevenue.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm opacity-80">Receita Mensal</p>
+                  <p className="text-2xl font-bold mt-1">
+                    {monthlyRevenue.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </p>
+                  <p className="text-xs opacity-80 mt-1">{approvedBudgets} orçamentos aprovados</p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{approvedBudgets} orçamentos aprovados</p>
-              </CardContent>
-            </Card>
+                <div className="bg-white/20 p-3 rounded-full">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Wrench className="w-4 h-4" />
-                  OS em Andamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{inProgressOrders}</div>
-                <p className="text-xs text-muted-foreground mt-1">{completedOrders} concluídas</p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm opacity-80">OS em Andamento</p>
+                  <p className="text-2xl font-bold mt-1">{inProgressOrders}</p>
+                  <p className="text-xs opacity-80 mt-1">{completedOrders} concluídas</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-full">
+                  <Wrench className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Orçamentos Pendentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingBudgets}</div>
-                <p className="text-xs text-muted-foreground mt-1">{totalBudgets} no total</p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm opacity-80">Orçamentos Pendentes</p>
+                  <p className="text-2xl font-bold mt-1">{pendingBudgets}</p>
+                  <p className="text-xs opacity-80 mt-1">{totalBudgets} no total</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-full">
+                  <FileText className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Total de Clientes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalCustomers}</div>
-                <p className="text-xs text-muted-foreground mt-1">Cadastrados</p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-xl p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm opacity-80">Total de Clientes</p>
+                  <p className="text-2xl font-bold mt-1">{totalCustomers}</p>
+                  <p className="text-xs opacity-80 mt-1">Cadastrados</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-full">
+                  <Users className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white border border-border rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-foreground" />
+                <h3 className="font-semibold text-foreground">Status das Ordens de Serviço</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium">Em Andamento</span>
+                    <span className="text-sm font-medium">{inProgressOrders}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-500 h-2.5 rounded-full" 
+                      style={{ width: `${orders.length > 0 ? (inProgressOrders / orders.length) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium">Concluídas</span>
+                    <span className="text-sm font-medium">{completedOrders}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-emerald-500 h-2.5 rounded-full" 
+                      style={{ width: `${orders.length > 0 ? (completedOrders / orders.length) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium">Pendentes</span>
+                    <span className="text-sm font-medium">{pendingBudgets}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-amber-500 h-2.5 rounded-full" 
+                      style={{ width: `${budgets.length > 0 ? (pendingBudgets / budgets.length) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-border rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <PieChart className="w-5 h-5 text-foreground" />
+                <h3 className="font-semibold text-foreground">Distribuição de Orçamentos</h3>
+              </div>
+              <div className="flex items-center justify-center">
+                <div className="relative w-48 h-48">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{totalBudgets}</div>
+                      <div className="text-xs text-muted-foreground">Total</div>
+                    </div>
+                  </div>
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                    {/* Aprovados */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="10"
+                      strokeDasharray={`${(approvedBudgets / totalBudgets) * 283 || 0} 283`}
+                      strokeDashoffset="0"
+                      transform="rotate(-90 50 50)"
+                    />
+                    {/* Pendentes */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth="10"
+                      strokeDasharray={`${(pendingBudgets / totalBudgets) * 283 || 0} 283`}
+                      strokeDashoffset={`${(approvedBudgets / totalBudgets) * 283 || 0}`}
+                      transform="rotate(-90 50 50)"
+                    />
+                    {/* Rejeitados */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="10"
+                      strokeDasharray={`${(totalBudgets - approvedBudgets - pendingBudgets) / totalBudgets * 283 || 0} 283`}
+                      strokeDashoffset={`${((approvedBudgets + pendingBudgets) / totalBudgets) * 283 || 0}`}
+                      transform="rotate(-90 50 50)"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                  <span className="text-xs">Aprovados ({approvedBudgets})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                  <span className="text-xs">Pendentes ({pendingBudgets})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-xs">Rejeitados ({totalBudgets - approvedBudgets - pendingBudgets})</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Ações Rápidas</h2>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Ações Rápidas</h2>
 
-            <Link href="/budgets/new">
-              <Button className="w-full justify-start h-auto py-4" size="lg">
-                <Plus className="w-5 h-5 mr-3" />
-                <div className="text-left">
-                  <div className="font-semibold">Novo Orçamento</div>
-                  <div className="text-xs text-primary-foreground/80">Criar orçamento para cliente</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Link href="/budgets/new" className="block">
+                <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow h-full">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Plus className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">Novo Orçamento</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Criar orçamento para cliente</p>
+                    </div>
+                  </div>
                 </div>
-              </Button>
-            </Link>
+              </Link>
 
-            <Link href="/orders/new">
-              <Button variant="outline" className="w-full justify-start h-auto py-4 bg-transparent" size="lg">
-                <Wrench className="w-5 h-5 mr-3" />
-                <div className="text-left">
-                  <div className="font-semibold">Nova Ordem de Serviço</div>
-                  <div className="text-xs text-muted-foreground">Criar OS do zero ou de orçamento</div>
+              <Link href="/orders/new" className="block">
+                <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow h-full">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-emerald-100 p-2 rounded-lg">
+                      <Wrench className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">Nova Ordem de Serviço</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Criar OS do zero ou de orçamento</p>
+                    </div>
+                  </div>
                 </div>
-              </Button>
-            </Link>
+              </Link>
 
-            <Link href="/customers/new">
-              <Button variant="outline" className="w-full justify-start h-auto py-4 bg-transparent" size="lg">
-                <Users className="w-5 h-5 mr-3" />
-                <div className="text-left">
-                  <div className="font-semibold">Cadastrar Cliente</div>
-                  <div className="text-xs text-muted-foreground">Adicionar novo cliente ao sistema</div>
+              <Link href="/customers/new" className="block">
+                <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow h-full">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-violet-100 p-2 rounded-lg">
+                      <Users className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">Cadastrar Cliente</h3>
+                      <p className="text-xs text-muted-foreground mt-1">Adicionar novo cliente ao sistema</p>
+                    </div>
+                  </div>
                 </div>
-              </Button>
-            </Link>
+              </Link>
+            </div>
           </div>
 
           {/* Recent Orders */}
           {recentOrders.length > 0 && (
-            <Card className="mb-6">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Ordens de Serviço Recentes</CardTitle>
+            <div className="bg-white border border-border rounded-xl p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div className="flex items-center gap-2 mb-2 sm:mb-0">
+                  <Wrench className="w-5 h-5 text-foreground" />
+                  <h2 className="text-lg font-semibold text-foreground">Ordens de Serviço Recentes</h2>
+                </div>
                 <Link href="/orders">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="outline" size="sm">
                     Ver todas
                   </Button>
                 </Link>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentOrders.map((order) => {
-                    const customer = getCustomerById(order.customerId)
-                    const vehicle = getVehicleById(order.vehicleId)
-                    
-                    return (
-                      <Link key={order.id} href={`/orders/${order.id}`}>
-                        <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                order.status === "completed"
-                                  ? "bg-green-500"
-                                  : order.status === "in-progress"
-                                    ? "bg-blue-500"
-                                    : order.status === "cancelled"
-                                      ? "bg-red-500"
-                                      : "bg-yellow-500"
-                              }`}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">OS #{order.id.slice(-6).toUpperCase()}</span>
-                                <Badge
-                                  variant={
-                                    order.status === "completed"
-                                      ? "default"
-                                      : order.status === "in-progress"
-                                        ? "secondary"
-                                        : "outline"
-                                  }
-                                  className="text-xs"
-                                >
-                                  {order.status === "completed"
-                                    ? "Concluída"
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                {recentOrders.map((order) => {
+                  const customer = getCustomerById(order.customerId)
+                  const vehicle = getVehicleById(order.vehicleId)
+                  
+                  return (
+                    <Link key={order.id} href={`/orders/${order.id}`} className="block">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-xl border border-border bg-card hover:bg-accent/30 transition-all duration-200 shadow-sm hover:shadow-md">
+                        <div className="flex items-start gap-4 flex-1 mb-3 sm:mb-0">
+                          <div
+                            className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
+                              order.status === "completed"
+                                ? "bg-green-500"
+                                : order.status === "in-progress"
+                                  ? "bg-blue-500"
+                                  : order.status === "cancelled"
+                                    ? "bg-red-500"
+                                    : "bg-yellow-500"
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">OS #{order.id.slice(-6).toUpperCase()}</span>
+                              <Badge
+                                variant={
+                                  order.status === "completed"
+                                    ? "default"
                                     : order.status === "in-progress"
-                                      ? "Em Andamento"
-                                      : order.status === "cancelled"
-                                        ? "Cancelada"
-                                        : "Pendente"}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-muted-foreground truncate">
-                                {customer?.name} • {vehicle?.plate}
-                              </div>
+                                      ? "secondary"
+                                      : "outline"
+                                }
+                                className="text-xs"
+                              >
+                                {order.status === "completed"
+                                  ? "Concluída"
+                                  : order.status === "in-progress"
+                                    ? "Em Andamento"
+                                    : order.status === "cancelled"
+                                      ? "Cancelada"
+                                      : "Pendente"}
+                              </Badge>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-sm">
-                              {order.total.toLocaleString("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              })}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {order.estimatedEndDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                            <div className="text-xs text-muted-foreground truncate">
+                              {customer?.name} • {vehicle?.plate}
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                        
+                        <div className="flex flex-col sm:text-right">
+                          <div className="font-semibold text-sm">
+                            {order.total.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1 sm:justify-end mt-1 sm:mt-0">
+                            <Clock className="w-3 h-3" />
+                            {order.estimatedEndDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           )}
 
           {/* Recent Budgets */}
           {recentBudgets.length > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Orçamentos Recentes</CardTitle>
+            <div className="bg-white border border-border rounded-xl p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div className="flex items-center gap-2 mb-2 sm:mb-0">
+                  <FileText className="w-5 h-5 text-foreground" />
+                  <h2 className="text-lg font-semibold text-foreground">Orçamentos Recentes</h2>
+                </div>
                 <Link href="/budgets">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="outline" size="sm">
                     Ver todos
                   </Button>
                 </Link>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentBudgets.map((budget) => {
-                    const customer = getCustomerById(budget.customerId)
-                    const vehicle = getVehicleById(budget.vehicleId)
-                    
-                    return (
-                      <Link key={budget.id} href={`/budgets/${budget.id}`}>
-                        <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                budget.status === "approved"
-                                  ? "bg-green-500"
-                                  : budget.status === "rejected"
-                                    ? "bg-red-500"
-                                    : "bg-yellow-500"
-                              }`}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">Orçamento #{budget.id.slice(-6).toUpperCase()}</span>
-                                <Badge
-                                  variant={
-                                    budget.status === "approved"
-                                      ? "default"
-                                      : budget.status === "rejected"
-                                        ? "destructive"
-                                        : "secondary"
-                                  }
-                                  className="text-xs"
-                                >
-                                  {budget.status === "approved"
-                                    ? "Aprovado"
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                {recentBudgets.map((budget) => {
+                  const customer = getCustomerById(budget.customerId)
+                  const vehicle = getVehicleById(budget.vehicleId)
+                  
+                  return (
+                    <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-xl border border-border bg-card hover:bg-accent/30 transition-all duration-200 shadow-sm hover:shadow-md">
+                        <div className="flex items-start gap-4 flex-1 mb-3 sm:mb-0">
+                          <div
+                            className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
+                              budget.status === "approved"
+                                ? "bg-green-500"
+                                : budget.status === "rejected"
+                                  ? "bg-red-500"
+                                  : "bg-yellow-500"
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">Orçamento #{budget.id.slice(-6).toUpperCase()}</span>
+                              <Badge
+                                variant={
+                                  budget.status === "approved"
+                                    ? "default"
                                     : budget.status === "rejected"
-                                      ? "Rejeitado"
-                                      : "Pendente"}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-muted-foreground truncate">
-                                {customer?.name} • {vehicle?.plate}
-                              </div>
+                                      ? "destructive"
+                                      : "secondary"
+                                }
+                                className="text-xs"
+                              >
+                                {budget.status === "approved"
+                                  ? "Aprovado"
+                                  : budget.status === "rejected"
+                                    ? "Rejeitado"
+                                    : "Pendente"}
+                              </Badge>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-sm">
-                              {budget.total.toLocaleString("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              })}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {budget.date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                            <div className="text-xs text-muted-foreground truncate">
+                              {customer?.name} • {vehicle?.plate}
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                        
+                        <div className="flex flex-col sm:text-right">
+                          <div className="font-semibold text-sm">
+                            {budget.total.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1 sm:justify-end mt-1 sm:mt-0">
+                            <Calendar className="w-3 h-3" />
+                            {budget.date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           )}
         </div>
       </div>
