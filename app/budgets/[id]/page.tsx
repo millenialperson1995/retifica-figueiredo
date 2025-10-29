@@ -23,7 +23,17 @@ import { useToast } from "@/hooks/use-toast"
 
 import React from "react";
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
+  return (
+    <AuthGuard>
+      <BudgetDetailContent params={params} />
+    </AuthGuard>
+  );
+}
+
+function BudgetDetailContent({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { toast } = useToast()
   const [showApproveDialog, setShowApproveDialog] = useState(false)

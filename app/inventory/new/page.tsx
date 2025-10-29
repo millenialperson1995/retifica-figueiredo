@@ -28,7 +28,17 @@ const inventoryItemSchema = z.object({
   notes: z.string().optional(),
 });
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function NewInventoryItemPage() {
+  return (
+    <AuthGuard>
+      <NewInventoryContent />
+    </AuthGuard>
+  );
+}
+
+function NewInventoryContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 

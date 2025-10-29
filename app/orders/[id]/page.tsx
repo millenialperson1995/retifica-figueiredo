@@ -22,7 +22,17 @@ import {
 
 import React from "react";
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
+  return (
+    <AuthGuard>
+      <OrderDetailContent params={params} />
+    </AuthGuard>
+  );
+}
+
+function OrderDetailContent({ params }: { params: { id: string } }) {
   const router = useRouter()
   const id = React.use(params).id;
   const order = getOrderById(id)

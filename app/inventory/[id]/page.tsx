@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/app-header";
 import { FileText, Package, AlertCircle, DollarSign } from "lucide-react";
 import { getInventoryById } from "@/lib/mock-data";
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 
 interface InventoryItemPageProps {
   params: {
@@ -15,6 +16,11 @@ interface InventoryItemPageProps {
 }
 
 export default async function InventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
+  const { userId } = auth();
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
   const resolvedParams = await params;
   const { id } = resolvedParams;
   const item = getInventoryById(id);

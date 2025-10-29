@@ -35,7 +35,17 @@ interface InventoryItemEditPageProps {
   };
 }
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function InventoryItemEditPage({ params }: InventoryItemEditPageProps) {
+  return (
+    <AuthGuard>
+      <InventoryItemEditContent params={params} />
+    </AuthGuard>
+  );
+}
+
+function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const item = getInventoryById(params.id);

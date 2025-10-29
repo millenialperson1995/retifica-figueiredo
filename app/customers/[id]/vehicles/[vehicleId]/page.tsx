@@ -9,7 +9,17 @@ import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, FileText } from "lucide-react"
 import { apiService } from "@/lib/api";
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function VehicleDetailPage() {
+  return (
+    <AuthGuard>
+      <VehicleDetailContent />
+    </AuthGuard>
+  );
+}
+
+function VehicleDetailContent() {
   const params = useParams<{ id: string, vehicleId: string }>();
   const [vehicle, setVehicle] = useState<any>(null);
   const [loading, setLoading] = useState(true);

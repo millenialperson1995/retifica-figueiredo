@@ -14,7 +14,17 @@ import { validateCPFOrCNPJ, validatePhone, validateEmail, formatPhone } from "@/
 import { useToast } from "@/hooks/use-toast"
 import type { Customer } from "@/lib/types"
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function NewCustomerPage() {
+  return (
+    <AuthGuard>
+      <NewCustomerContent />
+    </AuthGuard>
+  );
+}
+
+function NewCustomerContent() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)

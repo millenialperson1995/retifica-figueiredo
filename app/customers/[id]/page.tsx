@@ -10,7 +10,17 @@ import { ArrowLeft, Phone, Mail, MapPin, FileText, Plus, Car } from "lucide-reac
 import { apiService } from "@/lib/api"
 import type { Customer } from "@/lib/types"
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function CustomerDetailPage() {
+  return (
+    <AuthGuard>
+      <CustomerDetailContent />
+    </AuthGuard>
+  );
+}
+
+function CustomerDetailContent() {
   const params = useParams<{ id: string }>();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [vehicles, setVehicles] = useState<any[]>([]);

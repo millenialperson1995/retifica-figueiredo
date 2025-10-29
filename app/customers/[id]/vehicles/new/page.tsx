@@ -12,7 +12,17 @@ import { PageHeader } from "@/components/page-header"
 import { ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function NewVehiclePage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <AuthGuard>
+      <NewVehicleContent params={params} />
+    </AuthGuard>
+  );
+}
+
+function NewVehicleContent({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = React.use(params);
   const { id } = resolvedParams;
   const router = useRouter()

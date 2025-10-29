@@ -12,7 +12,17 @@ import { Search, Package, Plus, AlertCircle } from "lucide-react";
 import { mockInventory, getInventoryById } from "@/lib/mock-data";
 import { InventoryItem } from "@/lib/types";
 
+import AuthGuard from "@/components/auth-guard";
+
 export default function InventoryPage() {
+  return (
+    <AuthGuard>
+      <InventoryContent />
+    </AuthGuard>
+  );
+}
+
+function InventoryContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
