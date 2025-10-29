@@ -177,7 +177,7 @@ function BudgetsContent() {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground">Orçamento #{budget.id.slice(-6)}</h3>
+                              <h3 className="font-semibold text-foreground">Orçamento #{budget.id.slice(-6).toUpperCase()}</h3>
                               <Badge
                                 variant={
                                   budget.status === "approved"

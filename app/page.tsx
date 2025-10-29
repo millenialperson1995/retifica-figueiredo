@@ -319,7 +319,7 @@ function DashboardContent() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">OS #{order.id.slice(-6)}</span>
+                                <span className="font-medium text-sm">OS #{order.id.slice(-6).toUpperCase()}</span>
                                 <Badge
                                   variant={
                                     order.status === "completed"
@@ -397,7 +397,7 @@ function DashboardContent() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">Orçamento #{budget.id.slice(-6)}</span>
+                                <span className="font-medium text-sm">Orçamento #{budget.id.slice(-6).toUpperCase()}</span>
                                 <Badge
                                   variant={
                                     budget.status === "approved"

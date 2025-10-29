@@ -189,7 +189,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <PageHeader title={`Orçamento #${budget.id.slice(-6)}`} description="Detalhes do orçamento" />
+          <PageHeader title={`Orçamento #${budget.id.slice(-6).toUpperCase()}`} description="Detalhes do orçamento" />
         </div>
 
         {/* Status Badge */}
