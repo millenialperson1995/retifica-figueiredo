@@ -154,6 +154,8 @@ Cada usuário só pode acessar seus próprios dados, garantindo privacidade e se
 - Acompanhamento de progresso
 - Controle de datas e mecânicos
 - Geração de relatórios
+- **Restrição importante:** Ordens de serviço concluídas não podem ser alteradas para manter a integridade histórica dos serviços realizados
+- Permite edição apenas quando o status é "pendente" ou "em andamento"
 
 ### Gestão de Inventário
 - Controle de estoque de peças
