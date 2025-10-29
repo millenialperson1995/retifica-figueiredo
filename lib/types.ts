@@ -32,6 +32,18 @@ export interface ServiceItem {
   total: number
 }
 
+export interface StandardService {
+  id: string
+  name: string
+  description: string
+  duration?: number // Duração estimada em horas
+  category?: string
+  basePrice: number
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface PartItem {
   id: string
   description: string

@@ -20,9 +20,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+import React from "react";
+
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const order = getOrderById(params.id)
+  const id = React.use(params).id;
+  const order = getOrderById(id)
   const [status, setStatus] = useState(order?.status || "pending")
   const [showCompleteDialog, setShowCompleteDialog] = useState(false)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
@@ -42,7 +45,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     } else {
       setStatus(newStatus)
       // In a real app, this would update the database
-      console.log("Updating order status:", params.id, newStatus)
+      console.log("Updating order status:", id, newStatus)
     }
   }
 
@@ -50,14 +53,14 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     setStatus("completed")
     setShowCompleteDialog(false)
     // In a real app, this would update the database
-    console.log("Completing order:", params.id)
+    console.log("Completing order:", id)
   }
 
   const handleCancel = () => {
     setStatus("cancelled")
     setShowCancelDialog(false)
     // In a real app, this would update the database
-    console.log("Cancelling order:", params.id)
+    console.log("Cancelling order:", id)
   }
 
   return (
@@ -251,25 +254,32 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         </Card>
 
         {/* Quick Actions */}
-        {status === "pending" && (
-          <Button className="w-full" onClick={() => handleStatusChange("in-progress")}>
-            <PlayCircle className="w-4 h-4 mr-2" />
-            Iniciar Serviço
-          </Button>
-        )}
+        <div className="flex flex-col gap-2">
+          <Link href={`/orders/${id}/edit`}>
+            <Button variant="outline" className="w-full">
+              Editar
+            </Button>
+          </Link>
+          {status === "pending" && (
+            <Button className="w-full" onClick={() => handleStatusChange("in-progress")}>
+              <PlayCircle className="w-4 h-4 mr-2" />
+              Iniciar Serviço
+            </Button>
+          )}
 
-        {status === "in-progress" && (
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 bg-transparent" onClick={() => handleStatusChange("cancelled")}>
-              <XCircle className="w-4 h-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button className="flex-1" onClick={() => handleStatusChange("completed")}>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Concluir
-            </Button>
-          </div>
-        )}
+          {status === "in-progress" && (
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 bg-transparent" onClick={() => handleStatusChange("cancelled")}>
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancelar
+              </Button>
+              <Button className="flex-1" onClick={() => handleStatusChange("completed")}>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Concluir
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Complete Dialog */}
         <AlertDialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>

@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 
+import React from "react";
+
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -29,11 +31,13 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const [budget, setBudget] = useState<any>(null)
   const [customer, setCustomer] = useState<any>(null)
   const [vehicle, setVehicle] = useState<any>(null)
+  
+  const id = React.use(params).id;
 
   useEffect(() => {
     initializeStorage()
     const budgets = getBudgets()
-    const foundBudget = budgets.find((b) => b.id === params.id)
+    const foundBudget = budgets.find((b) => b.id === id)
 
     if (!foundBudget) {
       notFound()
@@ -45,7 +49,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
     const vehicles = getVehicles()
     setCustomer(customers.find((c) => c.id === foundBudget.customerId))
     setVehicle(vehicles.find((v) => v.id === foundBudget.vehicleId))
-  }, [params.id])
+  }, [id])
 
   if (!budget) {
     return null
@@ -61,7 +65,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
     })
 
     setShowApproveDialog(false)
-    router.push(`/orders/new?budgetId=${params.id}`)
+    router.push(`/orders/new?budgetId=${id}`)
   }
 
   const handleReject = () => {
@@ -256,27 +260,36 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
         </Card>
 
         {/* Actions */}
-        {budget.status === "pending" && (
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowRejectDialog(true)}>
-              <XCircle className="w-4 h-4 mr-2" />
-              Rejeitar
-            </Button>
-            <Button className="flex-1" onClick={() => setShowApproveDialog(true)}>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Aprovar
-            </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Link href={`/budgets/${id}/edit`}>
+              <Button variant="outline" className="flex-1">
+                Editar
+              </Button>
+            </Link>
+            {budget.status === "pending" && (
+              <div className="flex gap-2 flex-1">
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowRejectDialog(true)}>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Rejeitar
+                </Button>
+                <Button className="flex-1" onClick={() => setShowApproveDialog(true)}>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Aprovar
+                </Button>
+              </div>
+            )}
           </div>
-        )}
 
-        {budget.status === "approved" && (
-          <Link href={`/orders/new?budgetId=${params.id}`}>
-            <Button className="w-full">
-              <FileText className="w-4 h-4 mr-2" />
-              Criar Ordem de Serviço
-            </Button>
-          </Link>
-        )}
+          {budget.status === "approved" && (
+            <Link href={`/orders/new?budgetId=${id}`}>
+              <Button className="w-full">
+                <FileText className="w-4 h-4 mr-2" />
+                Criar Ordem de Serviço
+              </Button>
+            </Link>
+          )}
+        </div>
 
         {/* Approve Dialog */}
         <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>

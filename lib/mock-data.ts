@@ -1,4 +1,4 @@
-import type { Customer, Vehicle, Budget, Order, InventoryItem } from "./types"
+import type { Customer, Vehicle, Budget, Order, InventoryItem, StandardService } from "./types"
 
 export const mockCustomers: Customer[] = [
   {
@@ -302,4 +302,109 @@ export function getInventoryBySku(sku: string): InventoryItem | undefined {
 
 export function getInventoryByCategory(category: string): InventoryItem[] {
   return mockInventory.filter((i) => i.category === category)
+}
+
+// Serviços Padrão
+export const mockStandardServices: StandardService[] = [
+  {
+    id: "1",
+    name: "Retífica de Motor Completa",
+    description: "Retífica completa do motor com balanceamento e calibração",
+    duration: 40, // horas
+    category: "Motor",
+    basePrice: 2500,
+    isActive: true,
+    createdAt: new Date("2024-01-10"),
+    updatedAt: new Date("2024-03-15"),
+  },
+  {
+    id: "2",
+    name: "Retífica de Cabeçote",
+    description: "Retífica e reparo do cabeçote com troca de válvulas se necessário",
+    duration: 20, // horas
+    category: "Motor",
+    basePrice: 800,
+    isActive: true,
+    createdAt: new Date("2024-01-15"),
+    updatedAt: new Date("2024-03-20"),
+  },
+  {
+    id: "3",
+    name: "Retífica de Bloco",
+    description: "Retífica do bloco do motor com alinhamento e acabamento",
+    duration: 25, // horas
+    category: "Motor",
+    basePrice: 1200,
+    isActive: true,
+    createdAt: new Date("2024-01-20"),
+    updatedAt: new Date("2024-03-20"),
+  },
+  {
+    id: "4",
+    name: "Troca de Óleo e Filtros",
+    description: "Troca de óleo lubrificante e filtros (óleo, ar e combustível)",
+    duration: 1, // horas
+    category: "Manutenção",
+    basePrice: 150,
+    isActive: true,
+    createdAt: new Date("2024-02-01"),
+    updatedAt: new Date("2024-03-22"),
+  },
+  {
+    id: "5",
+    name: "Balanceamento de Virabrequim",
+    description: "Balanceamento dinâmico do virabrequim com pesos e calibragem",
+    duration: 8, // horas
+    category: "Motor",
+    basePrice: 450,
+    isActive: true,
+    createdAt: new Date("2024-02-05"),
+    updatedAt: new Date("2024-03-25"),
+  },
+  {
+    id: "6",
+    name: "Retífica de Comando de Válvulas",
+    description: "Retífica e polimento do comando de válvulas com retífica dos alojamentos",
+    duration: 12, // horas
+    category: "Motor",
+    basePrice: 650,
+    isActive: true,
+    createdAt: new Date("2024-02-10"),
+    updatedAt: new Date("2024-03-28"),
+  },
+  {
+    id: "7",
+    name: "Retífica de Pistões e Bielas",
+    description: "Verificação, retífica e balanceamento de pistões e bielas",
+    duration: 15, // horas
+    category: "Motor",
+    basePrice: 750,
+    isActive: true,
+    createdAt: new Date("2024-02-15"),
+    updatedAt: new Date("2024-03-28"),
+  },
+  {
+    id: "8",
+    name: "Teste de Compressão do Motor",
+    description: "Teste de compressão e diagnóstico do estado do motor",
+    duration: 0.5, // horas
+    category: "Diagnóstico",
+    basePrice: 100,
+    isActive: true,
+    createdAt: new Date("2024-03-01"),
+    updatedAt: new Date("2024-03-28"),
+  },
+]
+
+// Helper functions for standard services
+export function getStandardServiceById(id: string): StandardService | undefined {
+  return mockStandardServices.find((s) => s.id === id)
+}
+
+export function getActiveStandardServices(): StandardService[] {
+  return mockStandardServices.filter((s) => s.isActive)
+}
+
+export function getStandardServicesByCategory(category: string): StandardService[] {
+  return mockStandardServices.filter((s) => s.category === category && s.isActive)
 }
