@@ -73,7 +73,7 @@ export interface Budget {
 }
 
 export interface InventoryItem {
-  _id: string
+  id: string
   name: string
   description: string
   category: string

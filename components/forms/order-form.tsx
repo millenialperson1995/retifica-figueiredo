@@ -129,11 +129,11 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
     // If a customer is selected and they have vehicles, but no vehicle is selected yet,
     // default to the first vehicle in their list.
     if (customerId && !vehicleId && vehicles.length > 0) {
-      setVehicleId(vehicles[0]._id);
+      setVehicleId(vehicles[0].id);
     }
     // If the customer changes and the previously selected vehicle doesn't belong to them,
     // reset the vehicleId.
-    if (customerId && vehicleId && !vehicles.some(v => v._id === vehicleId)) {
+    if (customerId && vehicleId && !vehicles.some(v => v.id === vehicleId)) {
         setVehicleId("");
     }
   }, [customerId, vehicles, vehicleId]);
@@ -200,14 +200,14 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
   };
 
   const updatePartWithInventory = (partId: string, inventoryId: string) => {
-    const inventoryItem = inventoryItems.find(i => i._id === inventoryId);
+    const inventoryItem = inventoryItems.find(i => i.id === inventoryId);
     if (inventoryItem) {
       setParts(
         parts.map((p) => {
           if (p.id === partId) {
             const updated = {
               ...p,
-              inventoryId: inventoryItem._id,
+              inventoryId: inventoryItem.id,
               description: inventoryItem.name,
               partNumber: inventoryItem.sku,
               unitPrice: inventoryItem.unitPrice,
@@ -317,8 +317,8 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   <SelectContent>
                     {customers.map((customer) => (
                       <SelectItem
-                        key={customer._id}
-                        value={customer._id}
+                        key={customer.id}
+                        value={customer.id}
                       >
                         {customer.name}
                       </SelectItem>
@@ -337,8 +337,8 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                     <SelectContent>
                       {vehicles.map((vehicle) => (
                         <SelectItem 
-                          key={vehicle._id} 
-                          value={vehicle._id}
+                          key={vehicle.id} 
+                          value={vehicle.id}
                         >
                           {vehicle.brand} {vehicle.model} - {vehicle.plate}
                         </SelectItem>
@@ -387,7 +387,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
               <CardTitle className="text-base">Serviços</CardTitle>
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Select onValueChange={(value) => {
-                  const selectedService = standardServices.find(s => s._id === value);
+                  const selectedService = standardServices.find(s => s.id === value);
                   if (selectedService) {
                     addStandardService(selectedService);
                   }
@@ -397,7 +397,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {standardServices.map((service) => (
-                      <SelectItem key={service._id} value={service._id} className="flex items-center">
+                      <SelectItem key={service.id} value={service.id} className="flex items-center">
                         <Wrench className="w-4 h-4 mr-2" />
                         {service.name}
                       </SelectItem>
@@ -515,7 +515,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                         </SelectTrigger>
                         <SelectContent>
                           {inventoryItems.map((item) => (
-                            <SelectItem key={item._id} value={item._id}>
+                            <SelectItem key={item.id} value={item.id}>
                               {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
                             </SelectItem>
                           ))}
