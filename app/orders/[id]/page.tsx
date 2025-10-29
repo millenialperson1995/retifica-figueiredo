@@ -1,14 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { ArrowLeft, User, Car, Calendar, Clock, FileText, CheckCircle, XCircle, PlayCircle } from "lucide-react"
-import { getOrderById, getCustomerById, getVehicleById } from "@/lib/mock-data"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, User, Car, Calendar, Clock, FileText, CheckCircle, XCircle, PlayCircle, AlertCircle } from "lucide-react"
+import { apiService } from "@/lib/api"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,312 +18,311 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import AuthGuard from "@/components/auth-guard"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "@/components/ui/use-toast"
 
-import React from "react";
-
-import AuthGuard from "@/components/auth-guard";
-
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  return (
-    <AuthGuard>
-      <OrderDetailContent params={params} />
-    </AuthGuard>
-  );
+// Interfaces to match data structure
+interface Customer {
+  id: string;
+  name: string;
 }
 
-function OrderDetailContent({ params }: { params: { id: string } }) {
+interface Vehicle {
+  id: string;
+  plate: string;
+  brand: string;
+  model: string;
+}
+
+interface Order {
+  id: string;
+  customerId: string;
+  vehicleId: string;
+  startDate: string;
+  estimatedEndDate: string;
+  actualEndDate?: string;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
+  services: { id: string; description: string; quantity: number; unitPrice: number; total: number }[];
+  parts: { id: string; description: string; partNumber?: string; quantity: number; unitPrice: number; total: number }[];
+  total: number;
+  notes?: string;
+  mechanicNotes?: string;
+}
+
+export default function OrderDetailPage({ params }: { params: { id: string } }) {
+  const resolvedParams = React.use(params)
+  return (
+    <AuthGuard>
+      <OrderDetailContent id={resolvedParams.id} />
+    </AuthGuard>
+  )
+}
+
+function OrderDetailContent({ id }: { id: string }) {
   const router = useRouter()
-  const id = React.use(params).id;
-  const order = getOrderById(id)
-  const [status, setStatus] = useState(order?.status || "pending")
-  const [showCompleteDialog, setShowCompleteDialog] = useState(false)
-  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [order, setOrder] = useState<Order | null>(null)
+  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showStatusDialog, setShowStatusDialog] = useState<"completed" | "cancelled" | null>(null)
 
-  if (!order) {
-    notFound()
-  }
+  useEffect(() => {
+    if (!id || id === 'undefined') {
+      setError("ID da ordem de serviço inválido.")
+      setLoading(false)
+      return
+    }
 
-  const customer = getCustomerById(order.customerId)
-  const vehicle = getVehicleById(order.vehicleId)
+    const fetchData = async () => {
+      try {
+        const orderData = await apiService.getOrderById(id)
+        setOrder(orderData)
 
-  const handleStatusChange = (newStatus: string) => {
-    if (newStatus === "completed") {
-      setShowCompleteDialog(true)
-    } else if (newStatus === "cancelled") {
-      setShowCancelDialog(true)
-    } else {
-      setStatus(newStatus)
-      // In a real app, this would update the database
-      console.log("Updating order status:", id, newStatus)
+        const [customerData, vehicleData] = await Promise.all([
+          apiService.getCustomerById(orderData.customerId),
+          apiService.getVehicleById(orderData.vehicleId),
+        ])
+        setCustomer(customerData)
+        setVehicle(vehicleData)
+      } catch (err) {
+        setError("Falha ao carregar os dados da ordem de serviço.")
+        console.error(err)
+        notFound()
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id])
+
+  const handleStatusUpdate = async (newStatus: "completed" | "cancelled" | "in-progress") => {
+    if (!order) return
+
+    try {
+      const updatedOrder = await apiService.updateOrder(id, { status: newStatus })
+      setOrder(updatedOrder)
+      setShowStatusDialog(null)
+      toast({
+        title: "Status atualizado!",
+        description: `A ordem de serviço foi marcada como ${newStatus === 'completed' ? 'concluída' : newStatus === 'cancelled' ? 'cancelada' : 'em andamento'}.`,
+      })
+    } catch (err) {
+      toast({
+        title: "Erro ao atualizar status",
+        description: "Não foi possível atualizar o status da OS. Tente novamente.",
+        variant: "destructive",
+      })
     }
   }
 
-  const handleComplete = () => {
-    setStatus("completed")
-    setShowCompleteDialog(false)
-    // In a real app, this would update the database
-    console.log("Completing order:", id)
+  if (loading) {
+    return <OrderSkeleton />
   }
 
-  const handleCancel = () => {
-    setStatus("cancelled")
-    setShowCancelDialog(false)
-    // In a real app, this would update the database
-    console.log("Cancelling order:", id)
+  if (error) {
+    return (
+      <div className="container max-w-2xl mx-auto px-4 py-6 text-center">
+        <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
+        <PageHeader title="Erro" description={error} />
+        <Link href="/orders">
+          <Button variant="outline">Voltar para Ordens de Serviço</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  if (!order || !customer || !vehicle) {
+    notFound()
+  }
+
+  const getStatusVariant = (status: Order['status']) => {
+    switch (status) {
+      case "completed": return "default"
+      case "in-progress": return "secondary"
+      case "cancelled": return "destructive"
+      default: return "outline"
+    }
+  }
+
+  const getStatusLabel = (status: Order['status']) => {
+    switch (status) {
+      case "completed": return "Concluída"
+      case "in-progress": return "Em Andamento"
+      case "cancelled": return "Cancelada"
+      default: return "Pendente"
+    }
   }
 
   return (
     <div className="min-h-screen pb-20">
       <div className="container max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/orders">
+          <Link href="/orders" passHref>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <PageHeader title={`OS #${order.id}`} description="Detalhes da ordem de serviço" />
+          <div className="flex-grow">
+            <PageHeader title={`OS #${order.id.slice(-6).toUpperCase()}`} description="Detalhes da ordem de serviço" />
+          </div>
+          <Badge variant={getStatusVariant(order.status)}>{getStatusLabel(order.status)}</Badge>
         </div>
 
-        {/* Status Management */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-base">Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={status} onValueChange={handleStatusChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="in-progress">Em Andamento</SelectItem>
-                <SelectItem value="completed">Concluída</SelectItem>
-                <SelectItem value="cancelled">Cancelada</SelectItem>
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-
-        {/* Order Info */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-base">Informações</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <div className="text-xs text-muted-foreground">Data de Início</div>
-                <div className="text-sm font-medium">{order.startDate.toLocaleDateString("pt-BR")}</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <div className="text-xs text-muted-foreground">Previsão de Término</div>
-                <div className="text-sm font-medium">{order.estimatedEndDate.toLocaleDateString("pt-BR")}</div>
-              </div>
-            </div>
-
-            {order.actualEndDate && (
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <div>
-                  <div className="text-xs text-muted-foreground">Data de Conclusão</div>
-                  <div className="text-sm font-medium">{order.actualEndDate.toLocaleDateString("pt-BR")}</div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 pt-3 border-t border-border">
-              <User className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <div className="text-xs text-muted-foreground">Cliente</div>
-                <Link href={`/customers/${customer?.id}`} className="text-sm font-medium hover:underline">
-                  {customer?.name}
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Car className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <div className="text-xs text-muted-foreground">Veículo</div>
-                <div className="text-sm font-medium">
-                  {vehicle?.brand} {vehicle?.model} - {vehicle?.plate}
-                </div>
-              </div>
-            </div>
-
-            {order.notes && (
-              <div className="flex items-start gap-3 pt-3 border-t border-border">
-                <FileText className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <div className="text-xs text-muted-foreground">Observações</div>
-                  <div className="text-sm">{order.notes}</div>
-                </div>
-              </div>
-            )}
-
-            {order.mechanicNotes && (
-              <div className="flex items-start gap-3 pt-3 border-t border-border">
-                <FileText className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <div className="text-xs text-muted-foreground">Anotações do Mecânico</div>
-                  <div className="text-sm">{order.mechanicNotes}</div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Services */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-base">Serviços</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {order.services.map((service) => (
-                <div
-                  key={service.id}
-                  className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{service.description}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Quantidade: {service.quantity} ×{" "}
-                      {service.unitPrice.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </div>
-                  </div>
-                  <div className="font-semibold text-sm">
-                    {service.total.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Parts */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-base">Peças</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {order.parts.map((part) => (
-                <div
-                  key={part.id}
-                  className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{part.description}</div>
-                    {part.partNumber && <div className="text-xs text-muted-foreground">Código: {part.partNumber}</div>}
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Quantidade: {part.quantity} ×{" "}
-                      {part.unitPrice.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </div>
-                  </div>
-                  <div className="font-semibold text-sm">
-                    {part.total.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between text-lg font-bold">
-              <span>Total</span>
-              <span>
-                {order.total.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="flex flex-col gap-2">
-          <Link href={`/orders/${id}/edit`}>
-            <Button variant="outline" className="w-full">
-              Editar
-            </Button>
-          </Link>
-          {status === "pending" && (
-            <Button className="w-full" onClick={() => handleStatusChange("in-progress")}>
+        {/* Quick Actions based on status */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+          {order.status === 'pending' && (
+            <Button className="w-full sm:col-span-3" onClick={() => handleStatusUpdate('in-progress')}>
               <PlayCircle className="w-4 h-4 mr-2" />
               Iniciar Serviço
             </Button>
           )}
-
-          {status === "in-progress" && (
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 bg-transparent" onClick={() => handleStatusChange("cancelled")}>
+          {order.status === 'in-progress' && (
+            <>
+              <Button variant="destructive" className="w-full" onClick={() => setShowStatusDialog('cancelled')}>
                 <XCircle className="w-4 h-4 mr-2" />
                 Cancelar
               </Button>
-              <Button className="flex-1" onClick={() => handleStatusChange("completed")}>
+              <Button className="w-full sm:col-span-2" onClick={() => setShowStatusDialog('completed')}>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Concluir
+                Concluir Serviço
               </Button>
-            </div>
+            </>
           )}
         </div>
 
-        {/* Complete Dialog */}
-        <AlertDialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Concluir Ordem de Serviço</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja marcar esta ordem de serviço como concluída? O cliente será notificado.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleComplete}>Concluir</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* Order Info */}
+        <Card className="mb-4">
+          <CardHeader><CardTitle className="text-base">Informações</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <InfoItem icon={Calendar} label="Data de Início" value={new Date(order.startDate).toLocaleDateString("pt-BR")} />
+            <InfoItem icon={Clock} label="Previsão de Término" value={new Date(order.estimatedEndDate).toLocaleDateString("pt-BR")} />
+            {order.actualEndDate && <InfoItem icon={CheckCircle} label="Data de Conclusão" value={new Date(order.actualEndDate).toLocaleDateString("pt-BR")} />}
+            <InfoItem icon={User} label="Cliente" value={<Link href={`/customers/${customer.id}`} className="hover:underline">{customer.name}</Link>} />
+            <InfoItem icon={Car} label="Veículo" value={`${vehicle.brand} ${vehicle.model} - ${vehicle.plate}`} />
+            {order.notes && <InfoItem icon={FileText} label="Observações" value={order.notes} />}
+            {order.mechanicNotes && <InfoItem icon={FileText} label="Anotações do Mecânico" value={order.mechanicNotes} />}
+          </CardContent>
+        </Card>
 
-        {/* Cancel Dialog */}
-        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Cancelar Ordem de Serviço</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja cancelar esta ordem de serviço? Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Voltar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground">
-                Cancelar OS
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* Services and Parts */}
+        <ListItemCard title="Serviços" items={order.services} />
+        <ListItemCard title="Peças" items={order.parts} />
+
+        {/* Total */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between text-lg font-bold">
+              <span>Total</span>
+              <span>{order.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Link href={`/orders/${id}/edit`} passHref>
+          <Button variant="outline" className="w-full">Editar</Button>
+        </Link>
       </div>
+
+      {/* Dialogs */}
+      <AlertDialog open={!!showStatusDialog} onOpenChange={() => setShowStatusDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {showStatusDialog === 'completed' ? 'Concluir Ordem de Serviço?' : 'Cancelar Ordem de Serviço?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {showStatusDialog === 'completed'
+                ? "Esta ação marcará a OS como concluída. O cliente poderá ser notificado."
+                : "Tem certeza que deseja cancelar esta OS? Esta ação não pode ser desfeita."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleStatusUpdate(showStatusDialog!)}
+              className={showStatusDialog === 'cancelled' ? "bg-destructive text-destructive-foreground" : ""}
+            >
+              {showStatusDialog === 'completed' ? 'Concluir' : 'Sim, Cancelar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
+// Helper components
+function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 pt-3 border-t border-border first:pt-0 first:border-0">
+      <Icon className="w-4 h-4 text-muted-foreground mt-0.5" />
+      <div className="flex-1">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className="font-medium">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+function ListItemCard({ title, items }: { title: string, items: { id: string, description: string, quantity: number, unitPrice: number, total: number }[] }) {
+  if (items.length === 0) return null
+  return (
+    <Card className="mb-4">
+      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0 text-sm">
+              <div className="flex-1 pr-4">
+                <div className="font-medium">{item.description}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {item.quantity} × {item.unitPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </div>
+              </div>
+              <div className="font-semibold">
+                {item.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function OrderSkeleton() {
+  return (
+    <div className="container max-w-2xl mx-auto px-4 py-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Skeleton className="h-10 w-10 rounded-md" />
+        <div className="flex-grow">
+          <Skeleton className="h-6 w-40 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <Skeleton className="h-6 w-24 rounded-full" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+        <Skeleton className="h-10 w-full sm:col-span-3" />
+      </div>
+      <Card className="mb-4">
+        <CardHeader><Skeleton className="h-5 w-24" /></CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+      <Card className="mb-4">
+        <CardHeader><Skeleton className="h-5 w-24" /></CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </CardContent>
+      </Card>
     </div>
   )
 }

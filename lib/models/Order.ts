@@ -34,6 +34,15 @@ const orderSchema = new Schema<Order & { userId: string }>({
   total: { type: Number, required: true },
   notes: String,
   mechanicNotes: String,
+}, {
+  toJSON: {
+    virtuals: true,
+    transform: function(doc, ret) {
+      ret.id = ret._id.toString();
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
 });
 
 export const OrderModel = models.Order || model<Order & { userId: string }>('Order', orderSchema);

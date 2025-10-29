@@ -157,6 +157,10 @@ class ApiService {
     return this.request('/orders');
   }
 
+  async getOrderById(id: string): Promise<any> {
+    return this.request(`/orders/${id}`);
+  }
+
   async createOrder(orderData: any): Promise<any> {
     return this.request('/orders', {
       method: 'POST',
