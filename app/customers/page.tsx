@@ -25,34 +25,6 @@ interface Customer {
   createdAt: Date;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  cpfCnpj: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  userId: string;
-  createdAt: Date;
-}
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  cpfCnpj: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  userId: string;
-  createdAt: Date;
-}
-
 export default function CustomersPage() {
   return (
     <AuthGuard>

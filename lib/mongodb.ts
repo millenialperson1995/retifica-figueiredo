@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://matrix:stayFrosty2*@cluster-rectify-managem.1qivctf.mongodb.net/rectifydb?appName=Cluster-Rectify-Management';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 interface MongooseConnection {
   conn: typeof mongoose | null;

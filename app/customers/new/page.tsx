@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { saveCustomer, initializeStorage } from "@/lib/storage"
 import { validateCPFOrCNPJ, validatePhone, validateEmail, formatPhone } from "@/lib/validators"
 import { useToast } from "@/hooks/use-toast"
 import type { Customer } from "@/lib/types"
@@ -74,14 +73,18 @@ export default function NewCustomerPage() {
     setIsLoading(true)
 
     try {
-      initializeStorage()
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      const newCustomer: Customer = {
-        id: `CUST${Date.now()}`,
-        ...formData,
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to create customer' }));
+        throw new Error(errorData.error);
       }
-
-      saveCustomer(newCustomer)
 
       toast({
         title: "Cliente cadastrado!",
@@ -92,7 +95,7 @@ export default function NewCustomerPage() {
     } catch (error) {
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível cadastrar o cliente",
+        description: (error as Error).message || "Não foi possível cadastrar o cliente. Tente novamente.",
         variant: "destructive",
       })
     } finally {

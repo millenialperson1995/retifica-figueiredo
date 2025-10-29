@@ -12,6 +12,9 @@ const customerSchema = new Schema<Customer & { userId: string }>({
   zipCode: { type: String, required: true },
   userId: { type: String, required: true }, // ID do usuário proprietário
   createdAt: { type: Date, default: Date.now },
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 export const CustomerModel = models.Customer || model<Customer & { userId: string }>('Customer', customerSchema);
