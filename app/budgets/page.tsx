@@ -59,7 +59,7 @@ interface PartItem {
 }
 
 interface Budget {
-  id: string;
+  _id: string;
   customerId: string;
   vehicleId: string;
   date: Date;
@@ -83,26 +83,41 @@ export default function BudgetsPage() {
 
 function BudgetsContent() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBudgets = async () => {
+    const fetchData = async () => {
       try {
-        const budgetsData = await apiService.getBudgets();
-        // Converter datas para objetos Date
-        const formattedBudgets = budgetsData.map(budget => ({
+        // Fetch all required data in parallel
+        const [budgetsData, customersData, vehiclesData] = await Promise.all([
+          apiService.getBudgets(),
+          apiService.getCustomers(),
+          apiService.getVehicles()
+        ]);
+
+        // Convert dates for budgets and remove duplicates by ID
+        const uniqueBudgets = budgetsData.filter((budget, index, self) =>
+          index === self.findIndex(b => b._id === budget._id)
+        );
+
+        const formattedBudgets = uniqueBudgets.map(budget => ({
           ...budget,
           date: new Date(budget.date)
         }));
+
         setBudgets(formattedBudgets);
+        setCustomers(customersData);
+        setVehicles(vehiclesData);
       } catch (error) {
-        console.error('Erro ao buscar orçamentos:', error);
+        console.error('Erro ao buscar dados:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBudgets();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -113,26 +128,13 @@ function BudgetsContent() {
     );
   }
 
-  // Função para obter cliente por ID (você precisará implementar a busca real)
-  const getCustomerById = async (id: string) => {
-    try {
-      const customers = await apiService.getCustomers();
-      return customers.find(c => c.id === id);
-    } catch (error) {
-      console.error('Erro ao buscar cliente:', error);
-      return null;
-    }
+  // Helper functions to find customer and vehicle by ID
+  const getCustomerById = (id: string) => {
+    return customers.find(c => c.id === id);
   };
 
-  // Função para obter veículo por ID (você precisará implementar a busca real)
-  const getVehicleById = async (id: string) => {
-    try {
-      const vehicles = await apiService.getVehicles();
-      return vehicles.find(v => v.id === id);
-    } catch (error) {
-      console.error('Erro ao buscar veículo:', error);
-      return null;
-    }
+  const getVehicleById = (id: string) => {
+    return vehicles.find(v => v.id === id);
   };
 
   return (
@@ -165,15 +167,17 @@ function BudgetsContent() {
           ) : (
             <div className="space-y-3">
               {budgets.map((budget) => {
-                // Obter cliente e veículo de forma assíncrona (em uma implementação real, você buscaria todos de uma vez)
+                const customer = getCustomerById(budget.customerId);
+                const vehicle = getVehicleById(budget.vehicleId);
+
                 return (
-                  <Link key={budget.id} href={`/budgets/${budget.id}`}>
+                  <Link key={budget._id} href={`/budgets/${budget._id}`} className="block">
                     <Card className="hover:bg-accent/50 transition-colors">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground">Orçamento #{budget.id}</h3>
+                              <h3 className="font-semibold text-foreground">Orçamento #{budget._id.toString().slice(-6)}</h3>
                               <Badge
                                 variant={
                                   budget.status === "approved"
@@ -208,12 +212,12 @@ function BudgetsContent() {
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 text-sm">
                             <User className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{/* customer?.name */ "Cliente temporário"}</span>
+                            <span className="text-muted-foreground">{customer?.name || "Cliente não encontrado"}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Car className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-muted-foreground">
-                              {/* vehicle?.brand */ "Veículo"} {/* vehicle?.model */ "temporário"} - {/* vehicle?.plate */ "ABC-1234"}
+                              {vehicle?.brand || "Veículo"} {vehicle?.model || "temporário"} - {vehicle?.plate || "ABC-1234"}
                             </span>
                           </div>
                         </div>
@@ -226,7 +230,7 @@ function BudgetsContent() {
                       </CardContent>
                     </Card>
                   </Link>
-                )
+                );
               })}
             </div>
           )}

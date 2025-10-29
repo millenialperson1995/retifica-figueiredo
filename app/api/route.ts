@@ -7,28 +7,46 @@ export async function GET(req: NextRequest) {
     'API Documentation': `${baseUrl}/api/docs`,
     'API Specification (JSON)': `${baseUrl}/api/docs/swagger-json`,
     'Customers': {
-      'GET': `${baseUrl}/api/customers`,
-      'POST': `${baseUrl}/api/customers`
+      'GET (all)': `${baseUrl}/api/customers`,
+      'POST': `${baseUrl}/api/customers`,
+      'GET (by ID)': `${baseUrl}/api/customers/{id}`,
+      'PUT (by ID)': `${baseUrl}/api/customers/{id}`,
+      'DELETE (by ID)': `${baseUrl}/api/customers/{id}`
     },
     'Vehicles': {
-      'GET': `${baseUrl}/api/vehicles`,
-      'POST': `${baseUrl}/api/vehicles`
+      'GET (all)': `${baseUrl}/api/vehicles`,
+      'POST': `${baseUrl}/api/vehicles`,
+      'GET (by ID)': `${baseUrl}/api/vehicles/{id}`,
+      'PUT (by ID)': `${baseUrl}/api/vehicles/{id}`,
+      'DELETE (by ID)': `${baseUrl}/api/vehicles/{id}`
     },
     'Inventory': {
-      'GET': `${baseUrl}/api/inventory`,
-      'POST': `${baseUrl}/api/inventory`
+      'GET (all)': `${baseUrl}/api/inventory`,
+      'POST': `${baseUrl}/api/inventory`,
+      'GET (by ID)': `${baseUrl}/api/inventory/{id}`,
+      'PUT (by ID)': `${baseUrl}/api/inventory/{id}`,
+      'DELETE (by ID)': `${baseUrl}/api/inventory/{id}`
     },
     'Budgets': {
-      'GET': `${baseUrl}/api/budgets`,
-      'POST': `${baseUrl}/api/budgets`
+      'GET (all)': `${baseUrl}/api/budgets`,
+      'POST': `${baseUrl}/api/budgets`,
+      'GET (by ID)': `${baseUrl}/api/budgets/{id}`,
+      'PUT (by ID)': `${baseUrl}/api/budgets/{id}`,
+      'DELETE (by ID)': `${baseUrl}/api/budgets/{id}`
     },
     'Orders': {
-      'GET': `${baseUrl}/api/orders`,
-      'POST': `${baseUrl}/api/orders`
+      'GET (all)': `${baseUrl}/api/orders`,
+      'POST': `${baseUrl}/api/orders`,
+      'GET (by ID)': `${baseUrl}/api/orders/{id}`,
+      'PUT (by ID)': `${baseUrl}/api/orders/{id}`,
+      'DELETE (by ID)': `${baseUrl}/api/orders/{id}`
     },
     'Services': {
-      'GET': `${baseUrl}/api/services`,
-      'POST': `${baseUrl}/api/services`
+      'GET (all)': `${baseUrl}/api/services`,
+      'POST': `${baseUrl}/api/services`,
+      'GET (by ID)': `${baseUrl}/api/services/{id}`,
+      'PUT (by ID)': `${baseUrl}/api/services/{id}`,
+      'DELETE (by ID)': `${baseUrl}/api/services/{id}`
     }
   };
   

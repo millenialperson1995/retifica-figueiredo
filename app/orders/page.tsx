@@ -85,28 +85,43 @@ export default function OrdersPage() {
 
 function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       try {
-        const ordersData = await apiService.getOrders();
-        // Converter datas para objetos Date
-        const formattedOrders = ordersData.map(order => ({
+        // Fetch all required data in parallel
+        const [ordersData, customersData, vehiclesData] = await Promise.all([
+          apiService.getOrders(),
+          apiService.getCustomers(),
+          apiService.getVehicles()
+        ]);
+
+        // Convert dates for orders and remove duplicates by ID
+        const uniqueOrders = ordersData.filter((order, index, self) =>
+          index === self.findIndex(o => o.id === order.id)
+        );
+
+        const formattedOrders = uniqueOrders.map(order => ({
           ...order,
           startDate: new Date(order.startDate),
           estimatedEndDate: new Date(order.estimatedEndDate),
           actualEndDate: order.actualEndDate ? new Date(order.actualEndDate) : undefined
         }));
+
         setOrders(formattedOrders);
+        setCustomers(customersData);
+        setVehicles(vehiclesData);
       } catch (error) {
-        console.error('Erro ao buscar ordens de serviço:', error);
+        console.error('Erro ao buscar dados:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -116,6 +131,15 @@ function OrdersContent() {
       </div>
     );
   }
+
+  // Helper functions to find customer and vehicle by ID
+  const getCustomerById = (id: string) => {
+    return customers.find(c => c.id === id);
+  };
+
+  const getVehicleById = (id: string) => {
+    return vehicles.find(v => v.id === id);
+  };
 
   return (
     <>
@@ -147,9 +171,11 @@ function OrdersContent() {
           ) : (
             <div className="space-y-3">
               {orders.map((order) => {
-                // Obter cliente e veículo de forma assíncrona (em uma implementação real, você buscaria todos de uma vez)
+                const customer = getCustomerById(order.customerId);
+                const vehicle = getVehicleById(order.vehicleId);
+
                 return (
-                  <Link key={order.id} href={`/orders/${order.id}`}>
+                  <Link key={order.id} href={`/orders/${order.id}`} className="block">
                     <Card className="hover:bg-accent/50 transition-colors">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
@@ -194,12 +220,12 @@ function OrdersContent() {
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 text-sm">
                             <User className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{/* customer?.name */ "Cliente temporário"}</span>
+                            <span className="text-muted-foreground">{customer?.name || "Cliente não encontrado"}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Car className="w-3.5 h-3.5 text-muted-foreground" />
                             <span className="text-muted-foreground">
-                              {/* vehicle?.brand */ "Veículo"} {/* vehicle?.model */ "temporário"} - {/* vehicle?.plate */ "ABC-1234"}
+                              {vehicle?.brand || "Veículo"} {vehicle?.model || "temporário"} - {vehicle?.plate || "ABC-1234"}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
@@ -218,7 +244,7 @@ function OrdersContent() {
                       </CardContent>
                     </Card>
                   </Link>
-                )
+                );
               })}
             </div>
           )}

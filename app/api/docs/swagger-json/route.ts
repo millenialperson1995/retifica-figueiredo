@@ -18,11 +18,17 @@ const options: swaggerJsdoc.Options = {
   },
   apis: [
     './app/api/customers/route.ts',
+    './app/api/customers/[id]/route.ts',
     './app/api/vehicles/route.ts', 
+    './app/api/vehicles/[id]/route.ts',
     './app/api/inventory/route.ts',
+    './app/api/inventory/[id]/route.ts',
     './app/api/budgets/route.ts',
+    './app/api/budgets/[id]/route.ts',
     './app/api/orders/route.ts',
-    './app/api/services/route.ts'
+    './app/api/orders/[id]/route.ts',
+    './app/api/services/route.ts',
+    './app/api/services/[id]/route.ts'
   ], // files containing OpenAPI definitions
 };
 

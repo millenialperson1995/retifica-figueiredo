@@ -29,7 +29,12 @@ class ApiService {
     }
 
     if (!response.ok) {
-      throw new Error(`Erro na API: ${response.status} - ${response.statusText}`);
+      // Retornar informações específicas para tratamento de erros
+      const errorText = await response.text();
+      const error = new Error(`Erro na API: ${response.status} - ${response.statusText}`);
+      (error as any).status = response.status;
+      (error as any).responseText = errorText;
+      throw error;
     }
 
     return response.json();
@@ -121,6 +126,10 @@ class ApiService {
   // Budget API methods
   async getBudgets(): Promise<any[]> {
     return this.request('/budgets');
+  }
+
+  async getBudgetById(id: string): Promise<any> {
+    return this.request(`/budgets/${id}`);
   }
 
   async createBudget(budgetData: any): Promise<any> {

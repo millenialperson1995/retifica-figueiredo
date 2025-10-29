@@ -121,7 +121,7 @@ function CustomersContent() {
                       </CardContent>
                     </Card>
                   </Link>
-                )
+                );
               })}
             </div>
           )}

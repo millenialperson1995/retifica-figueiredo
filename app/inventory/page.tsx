@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { Search, Package, Plus, AlertCircle } from "lucide-react";
-import { mockInventory, getInventoryById } from "@/lib/mock-data";
+import { apiService } from "@/lib/api";
 import { InventoryItem } from "@/lib/types";
 
 import AuthGuard from "@/components/auth-guard";
@@ -23,11 +23,28 @@ export default function InventoryPage() {
 }
 
 function InventoryContent() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const inventoryData = await apiService.getInventory();
+        setInventory(inventoryData);
+      } catch (error) {
+        console.error('Erro ao buscar itens de estoque:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventory();
+  }, []);
 
   // Filter inventory items based on search term and category
-  const filteredInventory = mockInventory.filter(item => {
+  const filteredInventory = inventory.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -38,12 +55,12 @@ function InventoryContent() {
   });
 
   // Get unique categories for the filter
-  const categories = ["all", ...new Set(mockInventory.map(item => item.category))];
+  const categories = ["all", ...new Set(inventory.map(item => item.category))];
 
   // Calculate inventory stats
-  const totalItems = mockInventory.length;
-  const lowStockItems = mockInventory.filter(item => item.quantity <= item.minQuantity).length;
-  const totalValue = mockInventory.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const totalItems = inventory.length;
+  const lowStockItems = inventory.filter(item => item.quantity <= item.minQuantity).length;
+  const totalValue = inventory.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
 
   return (
     <>
@@ -146,7 +163,7 @@ function InventoryContent() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredInventory.map(item => (
-                    <Link key={item.id} href={`/inventory/${item.id}`}>
+                    <Link key={item._id} href={`/inventory/${item._id}`}>
                       <Card className="hover:shadow-md transition-shadow cursor-pointer border-border hover:border-primary/30">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-2">

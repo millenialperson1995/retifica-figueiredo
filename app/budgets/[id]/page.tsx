@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { ArrowLeft, User, Car, Calendar, FileText, CheckCircle, XCircle } from "lucide-react"
-import { getBudgets, getCustomers, getVehicles, saveBudget, initializeStorage } from "@/lib/storage"
+import { ArrowLeft, User, Car, Calendar, FileText, CheckCircle, XCircle, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
@@ -20,10 +19,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-
-import React from "react";
-
-import AuthGuard from "@/components/auth-guard";
+import AuthGuard from "@/components/auth-guard"
+import { apiService } from "@/lib/api"
+import { AppHeader } from "@/components/app-header"
 
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   return (
@@ -41,58 +39,149 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
   const [budget, setBudget] = useState<any>(null)
   const [customer, setCustomer] = useState<any>(null)
   const [vehicle, setVehicle] = useState<any>(null)
-  
-  const id = React.use(params).id;
+  const [loading, setLoading] = useState(true)
+
+  const { id } = React.use(params);
 
   useEffect(() => {
-    initializeStorage()
-    const budgets = getBudgets()
-    const foundBudget = budgets.find((b) => b.id === id)
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const budgetData = await apiService.getBudgetById(id);
+        
+        if (!budgetData) {
+          notFound();
+          return;
+        }
 
-    if (!foundBudget) {
-      notFound()
+        budgetData.date = new Date(budgetData.date);
+        setBudget(budgetData);
+
+        // Tentar buscar cliente e veículo, mas não falhar se não forem encontrados
+        let customerData = null;
+        let vehicleData = null;
+        
+        try {
+          customerData = await apiService.getCustomerById(budgetData.customerId);
+        } catch (customerError) {
+          console.error("Error fetching customer:", customerError);
+          toast({
+            title: "Aviso",
+            description: "Não foi possível carregar os dados do cliente associado a este orçamento.",
+            variant: "destructive",
+          });
+        }
+
+        try {
+          vehicleData = await apiService.getVehicleById(budgetData.vehicleId);
+        } catch (vehicleError) {
+          console.error("Error fetching vehicle:", vehicleError);
+          toast({
+            title: "Aviso",
+            description: "Não foi possível carregar os dados do veículo associado a este orçamento.",
+            variant: "destructive",
+          });
+        }
+
+        setCustomer(customerData);
+        setVehicle(vehicleData);
+
+      } catch (error: any) {
+        console.error("Error fetching budget details:", error);
+        
+        // Se for um erro 404, mostrar pagina de not found
+        if (error.message && (error.message.includes('404') || error.message.includes('not found'))) {
+          toast({
+            title: "Orçamento não encontrado",
+            description: "O orçamento solicitado não existe ou você não tem permissão para acessá-lo.",
+            variant: "destructive",
+          });
+          notFound();
+        } else {
+          toast({
+            title: "Erro ao carregar orçamento",
+            description: "Ocorreu um erro ao tentar carregar os dados do orçamento.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchData();
     }
+  }, [id, toast]);
 
-    setBudget(foundBudget)
+  const handleApprove = async () => {
+    if (!budget) return;
+    try {
+      const updatedBudget = { ...budget, status: "approved" };
+      await apiService.updateBudget(id, updatedBudget);
 
-    const customers = getCustomers()
-    const vehicles = getVehicles()
-    setCustomer(customers.find((c) => c.id === foundBudget.customerId))
-    setVehicle(vehicles.find((v) => v.id === foundBudget.vehicleId))
-  }, [id])
+      toast({
+        title: "Orçamento aprovado!",
+        description: "Você será redirecionado para criar a ordem de serviço.",
+      });
+
+      setShowApproveDialog(false);
+      router.push(`/orders/new?budgetId=${id}`);
+    } catch (error) {
+      console.error("Error approving budget:", error);
+      toast({
+        title: "Erro ao aprovar",
+        description: "Não foi possível aprovar o orçamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async () => {
+    if (!budget) return;
+    try {
+      const updatedBudget = { ...budget, status: "rejected" };
+      await apiService.updateBudget(id, updatedBudget);
+
+      toast({
+        title: "Orçamento rejeitado",
+        description: "O orçamento foi marcado como rejeitado.",
+        variant: "destructive",
+      });
+
+      setShowRejectDialog(false);
+      router.push("/budgets");
+    } catch (error) {
+      console.error("Error rejecting budget:", error);
+      toast({
+        title: "Erro ao rejeitar",
+        description: "Não foi possível rejeitar o orçamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <AppHeader />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="flex items-center gap-2 text-lg">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            Carregando orçamento...
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (!budget) {
-    return null
-  }
-
-  const handleApprove = () => {
-    const updatedBudget = { ...budget, status: "approved" }
-    saveBudget(updatedBudget)
-
-    toast({
-      title: "Orçamento aprovado!",
-      description: "Você será redirecionado para criar a ordem de serviço",
-    })
-
-    setShowApproveDialog(false)
-    router.push(`/orders/new?budgetId=${id}`)
-  }
-
-  const handleReject = () => {
-    const updatedBudget = { ...budget, status: "rejected" }
-    saveBudget(updatedBudget)
-
-    toast({
-      title: "Orçamento rejeitado",
-      description: "O orçamento foi marcado como rejeitado",
-      variant: "destructive",
-    })
-
-    setShowRejectDialog(false)
-    router.push("/budgets")
+    return null;
   }
 
   return (
+    <>
+    <AppHeader />
     <div className="min-h-screen pb-20">
       <div className="container max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
@@ -101,7 +190,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <PageHeader title={`Orçamento #${budget.id}`} description="Detalhes do orçamento" />
+          <PageHeader title={`Orçamento #${budget._id.toString().slice(-6)}`} description="Detalhes do orçamento" />
         </div>
 
         {/* Status Badge */}
@@ -130,25 +219,45 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <div className="text-xs text-muted-foreground">Cliente</div>
-                <Link href={`/customers/${customer?.id}`} className="text-sm font-medium hover:underline">
-                  {customer?.name}
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Car className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <div className="text-xs text-muted-foreground">Veículo</div>
-                <div className="text-sm font-medium">
-                  {vehicle?.brand} {vehicle?.model} - {vehicle?.plate}
+            {customer ? (
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <div className="text-xs text-muted-foreground">Cliente</div>
+                  <Link href={`/customers/${customer._id}`} className="text-sm font-medium hover:underline">
+                    {customer.name}
+                  </Link>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <div className="text-xs text-muted-foreground">Cliente</div>
+                  <div className="text-sm font-medium text-muted-foreground">Cliente não encontrado</div>
+                </div>
+              </div>
+            )}
+
+            {vehicle ? (
+              <div className="flex items-center gap-3">
+                <Car className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <div className="text-xs text-muted-foreground">Veículo</div>
+                  <div className="text-sm font-medium">
+                    {vehicle.brand} {vehicle.model} - {vehicle.plate}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Car className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <div className="text-xs text-muted-foreground">Veículo</div>
+                  <div className="text-sm font-medium text-muted-foreground">Veículo não encontrado</div>
+                </div>
+              </div>
+            )}
 
             {budget.notes && (
               <div className="flex items-start gap-3 pt-3 border-t border-border">
@@ -163,73 +272,77 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         </Card>
 
         {/* Services */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-base">Serviços</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {budget.services.map((service) => (
-                <div
-                  key={service.id}
-                  className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{service.description}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Quantidade: {service.quantity} ×{" "}
-                      {service.unitPrice.toLocaleString("pt-BR", {
+        {budget.services && budget.services.length > 0 && (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-base">Serviços</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {budget.services.map((service: any) => (
+                  <div
+                    key={service._id || service.id}
+                    className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{service.description}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Quantidade: {service.quantity} ×{" "}
+                        {service.unitPrice.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </div>
+                    </div>
+                    <div className="font-semibold text-sm">
+                      {service.total.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
                     </div>
                   </div>
-                  <div className="font-semibold text-sm">
-                    {service.total.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Parts */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-base">Peças</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {budget.parts.map((part) => (
-                <div
-                  key={part.id}
-                  className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{part.description}</div>
-                    {part.partNumber && <div className="text-xs text-muted-foreground">Código: {part.partNumber}</div>}
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Quantidade: {part.quantity} ×{" "}
-                      {part.unitPrice.toLocaleString("pt-BR", {
+        {budget.parts && budget.parts.length > 0 && (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-base">Peças</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {budget.parts.map((part: any) => (
+                  <div
+                    key={part._id || part.id}
+                    className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{part.description}</div>
+                      {part.partNumber && <div className="text-xs text-muted-foreground">Código: {part.partNumber}</div>}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Quantidade: {part.quantity} ×{" "}
+                        {part.unitPrice.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </div>
+                    </div>
+                    <div className="font-semibold text-sm">
+                      {part.total.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
                     </div>
                   </div>
-                  <div className="font-semibold text-sm">
-                    {part.total.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Total */}
         <Card className="mb-6">
@@ -336,5 +449,6 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         </AlertDialog>
       </div>
     </div>
+    </>
   )
 }
