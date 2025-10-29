@@ -3,8 +3,8 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
-import { MobileNav } from "@/components/mobile-nav"
 import { Toaster } from "@/components/ui/toaster"
+import AuthenticatedMobileNav from "./authenticated-mobile-nav"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,7 +24,7 @@ export default function RootLayout({
       <html lang="pt-BR">
         <body className={inter.className}>
           {children}
-          <MobileNav />
+          <AuthenticatedMobileNav />
           <Toaster />
         </body>
       </html>
