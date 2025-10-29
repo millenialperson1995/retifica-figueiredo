@@ -2,7 +2,7 @@ import { Schema, model, models } from 'mongoose';
 import { Order } from '../types';
 
 const orderSchema = new Schema<Order & { userId: string }>({
-  budgetId: { type: String, required: true, ref: 'Budget' },
+  budgetId: { type: String, required: false, ref: 'Budget' }, // Opcional pois nem toda OS vem de um orçamento
   customerId: { type: String, required: true, ref: 'Customer' },
   vehicleId: { type: String, required: true, ref: 'Vehicle' },
   startDate: { type: Date, default: Date.now },

@@ -288,8 +288,8 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       return;
     }
     
-    const orderData = {
-      budgetId: budgetId === "none" ? undefined : budgetId,
+    // Prepare order data based on whether it's a new order or editing
+    let orderData: any = {
       customerId,
       vehicleId,
       startDate,
@@ -301,6 +301,12 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       total,
       status: status || 'pending', // Use current status if editing
     };
+    
+    // Only include budgetId if it's not 'none' (for new orders) or if editing and budgetId was set
+    // This ensures the field is not sent at all if it's 'none', which should avoid validation issues
+    if (budgetId !== "none" && budgetId !== undefined && budgetId !== null) {
+      orderData.budgetId = budgetId;
+    }
 
     try {
       const method = isEditing ? 'PUT' : 'POST';
@@ -315,14 +321,16 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error(isEditing ? 'Failed to update order' : 'Failed to create order');
+        const errorData = await response.json();
+        throw new Error(errorData.error || (isEditing ? 'Failed to update order' : 'Failed to create order'));
       }
 
       router.push("/orders");
 
     } catch (error) {
       console.error("Submission error:", error);
-      setError(isEditing ? "Falha ao atualizar a ordem de serviço. Por favor, tente novamente." : "Falha ao criar a ordem de serviço. Por favor, tente novamente.");
+      const errorMessage = error instanceof Error ? error.message : (isEditing ? 'Falha ao atualizar a ordem de serviço. Por favor, tente novamente.' : 'Falha ao criar a ordem de serviço. Por favor, tente novamente.');
+      setError(errorMessage);
     }
   };
 

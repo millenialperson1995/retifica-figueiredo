@@ -90,7 +90,7 @@ export interface InventoryItem {
 
 export interface Order {
   id: string
-  budgetId: string
+  budgetId?: string // Opcional, pois nem toda OS vem de um orçamento
   customerId: string
   vehicleId: string
   startDate: Date
