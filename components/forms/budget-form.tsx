@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
 import { ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
-import { getCustomers, getVehicles, saveBudget, initializeStorage } from "@/lib/storage";
 import type { ServiceItem, PartItem, Budget, InventoryItem, StandardService } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { mockInventory, getInventoryById, getActiveStandardServices } from "@/lib/mock-data";
+import { mockInventory, getActiveStandardServices } from "@/lib/mock-data";
+import { apiService } from "@/lib/api";
 
 interface BudgetFormProps {
   budget?: Budget;
@@ -24,9 +24,10 @@ interface BudgetFormProps {
 
 export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [customerId, setCustomerId] = useState(budget?.customerId || "");
+  const [customerId, setCustomerId] = useState(budget?.customerId || searchParams.get('customerId') || "");
   const [vehicleId, setVehicleId] = useState(budget?.vehicleId || "");
   const [notes, setNotes] = useState(budget?.notes || "");
   const [services, setServices] = useState<ServiceItem[]>(budget?.services || [
@@ -37,10 +38,10 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [allVehicles, setAllVehicles] = useState<any[]>([]);
   const standardServices = getActiveStandardServices();
 
-  const customers = getCustomers();
-  const allVehicles = getVehicles();
   const vehicles = customerId ? allVehicles.filter((v) => v.customerId === customerId) : [];
 
   // Carregar dados do orçamento existente para edição
@@ -55,7 +56,26 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   }, [budget, isEditing]);
 
   useEffect(() => {
-    initializeStorage();
+    const fetchData = async () => {
+      try {
+        // Carregar clientes e veículos
+        const [customersData, vehiclesData] = await Promise.all([
+          apiService.getCustomers(),
+          apiService.getVehicles(),
+        ]);
+        setCustomers(customersData);
+        setAllVehicles(vehiclesData);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os clientes e veículos",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -125,7 +145,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   };
 
   const updatePartWithInventory = (id: string, inventoryId: string) => {
-    const inventoryItem = getInventoryById(inventoryId);
+    const inventoryItem = mockInventory.find(item => item.id === inventoryId);
     if (inventoryItem) {
       setParts(
         parts.map((p) => {
@@ -179,14 +199,19 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
         date: budget?.date || new Date(),
         services: services.filter((s) => s.description.trim()),
         parts: parts.filter((p) => p.description.trim()),
+        status: budget?.status || "pending",
+        notes,
         subtotal,
         discount: budget?.discount || 0,
         total: subtotal - (budget?.discount || 0),
-        status: budget?.status || "pending",
-        notes,
       };
 
-      saveBudget(newBudget);
+      // Salvar o orçamento
+      if (isEditing) {
+        await apiService.updateBudget(budget!.id, newBudget);
+      } else {
+        await apiService.createBudget(newBudget);
+      }
 
       toast({
         title: isEditing ? "Orçamento atualizado!" : "Orçamento criado!",
@@ -235,7 +260,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
+                      <SelectItem key={customer._id || customer.id} value={customer._id || customer.id}>
                         {customer.name}
                       </SelectItem>
                     ))}
@@ -252,7 +277,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
                     </SelectTrigger>
                     <SelectContent>
                       {vehicles.map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                        <SelectItem key={vehicle._id || vehicle.id} value={vehicle._id || vehicle.id}>
                           {vehicle.brand} {vehicle.model} - {vehicle.plate}
                         </SelectItem>
                       ))}
