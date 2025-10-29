@@ -32,12 +32,8 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
   const [estimatedEndDate, setEstimatedEndDate] = useState("");
   const [notes, setNotes] = useState("");
   const [mechanicNotes, setMechanicNotes] = useState("");
-  const [services, setServices] = useState<ServiceItem[]>([
-    { id: "1", description: "", quantity: 1, unitPrice: 0, total: 0 },
-  ]);
-  const [parts, setParts] = useState<PartItem[]>([
-    { id: "1", description: "", partNumber: "", quantity: 1, unitPrice: 0, total: 0 },
-  ]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [parts, setParts] = useState<PartItem[]>([]);
 
   const standardServices = getActiveStandardServices();
   const vehicles = customerId ? getVehiclesByCustomerId(customerId) : [];
@@ -329,11 +325,15 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {services.map((service, index) => (
-                <div key={service.id} className="space-y-3 p-4 border border-border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Serviço {index + 1}</span>
-                    {services.length > 1 && (
+              {services.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  Nenhum serviço adicionado. Clique em "Adicionar Manual" ou selecione um "serviço padrão" para começar.
+                </div>
+              ) : (
+                services.map((service, index) => (
+                  <div key={service.id} className="space-y-3 p-4 border border-border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Serviço {index + 1}</span>
                       <Button
                         type="button"
                         size="sm"
@@ -343,54 +343,54 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Descrição *</Label>
-                    <Input
-                      value={service.description}
-                      onChange={(e) => updateService(service.id, "description", e.target.value)}
-                      placeholder="Ex: Retífica de motor completa"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-2">
-                      <Label>Qtd *</Label>
+                      <Label>Descrição *</Label>
                       <Input
-                        type="number"
-                        min="1"
-                        value={service.quantity}
-                        onChange={(e) => updateService(service.id, "quantity", Number(e.target.value))}
+                        value={service.description}
+                        onChange={(e) => updateService(service.id, "description", e.target.value)}
+                        placeholder="Ex: Retífica de motor completa"
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Valor Unit. *</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={service.unitPrice}
-                        onChange={(e) => updateService(service.id, "unitPrice", Number(e.target.value))}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Total</Label>
-                      <Input
-                        value={service.total.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                        disabled
-                      />
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-2">
+                        <Label>Qtd *</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={service.quantity || ''}
+                          onChange={(e) => updateService(service.id, "quantity", e.target.value ? Number(e.target.value) : 0)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Valor Unit. *</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={service.unitPrice || ''}
+                          onChange={(e) => updateService(service.id, "unitPrice", e.target.value ? Number(e.target.value) : 0)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total</Label>
+                        <Input
+                          value={service.total.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                          disabled
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
 
@@ -404,11 +404,15 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {parts.map((part, index) => (
-                <div key={part.id} className="space-y-3 p-4 border border-border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Peça {index + 1}</span>
-                    {parts.length > 1 && (
+              {parts.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  Nenhuma peça adicionada. Clique em "Adicionar" para começar.
+                </div>
+              ) : (
+                parts.map((part, index) => (
+                  <div key={part.id} className="space-y-3 p-4 border border-border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Peça {index + 1}</span>
                       <Button
                         type="button"
                         size="sm"
@@ -418,84 +422,84 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Peça do Estoque</Label>
-                    <Select
-                      value={part.inventoryId || ""}
-                      onValueChange={(value) => updatePartWithInventory(part.id, value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma peça do estoque" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {mockInventory.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Descrição *</Label>
-                    <Input
-                      value={part.description}
-                      onChange={(e) => updatePart(part.id, "description", e.target.value)}
-                      placeholder="Ex: Jogo de juntas do motor"
-                      required
-                      disabled={!!part.inventoryId}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Código da Peça</Label>
-                    <Input
-                      value={part.partNumber}
-                      onChange={(e) => updatePart(part.id, "partNumber", e.target.value)}
-                      placeholder="Ex: JG-001"
-                      disabled={!!part.inventoryId}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-2">
-                      <Label>Qtd *</Label>
+                      <Label>Peça do Estoque</Label>
+                      <Select
+                        value={part.inventoryId || ""}
+                        onValueChange={(value) => updatePartWithInventory(part.id, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma peça do estoque" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {mockInventory.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Descrição *</Label>
                       <Input
-                        type="number"
-                        min="1"
-                        value={part.quantity}
-                        onChange={(e) => updatePart(part.id, "quantity", Number(e.target.value))}
+                        value={part.description}
+                        onChange={(e) => updatePart(part.id, "description", e.target.value)}
+                        placeholder="Ex: Jogo de juntas do motor"
                         required
+                        disabled={!!part.inventoryId}
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label>Valor Unit. *</Label>
+                      <Label>Código da Peça</Label>
                       <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={part.unitPrice}
-                        onChange={(e) => updatePart(part.id, "unitPrice", Number(e.target.value))}
-                        required
+                        value={part.partNumber}
+                        onChange={(e) => updatePart(part.id, "partNumber", e.target.value)}
+                        placeholder="Ex: JG-001"
+                        disabled={!!part.inventoryId}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Total</Label>
-                      <Input
-                        value={part.total.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                        disabled
-                      />
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-2">
+                        <Label>Qtd *</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={part.quantity || ''}
+                          onChange={(e) => updatePart(part.id, "quantity", e.target.value ? Number(e.target.value) : 0)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Valor Unit. *</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={part.unitPrice || ''}
+                          onChange={(e) => updatePart(part.id, "unitPrice", e.target.value ? Number(e.target.value) : 0)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total</Label>
+                        <Input
+                          value={part.total.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                          disabled
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
 
