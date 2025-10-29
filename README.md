@@ -146,6 +146,7 @@ A principal diferença na nova versão do Clerk é que:
 - Acompanhamento do status (pendente, em andamento, concluída, cancelada)
 - Adição de serviços e peças
 - Controle de datas e mecânicos
+- **Restrição importante:** Ordens de serviço concluídas não podem ser alteradas para manter a integridade histórica dos serviços realizados. A edição só é permitida quando o status é "pendente" ou "em andamento".
 
 ### Gestão de Inventário
 - Controle de peças e estoque

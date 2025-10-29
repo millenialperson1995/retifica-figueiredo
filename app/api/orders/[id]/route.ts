@@ -416,6 +416,30 @@ export async function PUT(
     const { id } = resolvedParams;
     const body = await req.json();
     
+    // Check if the order is completed before allowing updates
+    const existingOrder = await OrderModel.findOne({ _id: id, userId: auth.userId });
+    
+    if (!existingOrder) {
+      return new Response(JSON.stringify({ error: 'Order not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+    
+    // Prevent modification of completed orders
+    if (existingOrder.status === 'completed') {
+      return new Response(JSON.stringify({ 
+        error: 'Cannot modify a completed order. Completed orders are locked to maintain historical integrity.' 
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+    
     // Update order by ID and authenticated user ID
     const updatedOrder = await OrderModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
