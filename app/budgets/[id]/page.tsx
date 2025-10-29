@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast"
 import AuthGuard from "@/components/auth-guard"
 import { apiService } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
+import { Budget, Customer, Vehicle } from "@/lib/types"
 
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   return (
@@ -36,9 +37,9 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
   const { toast } = useToast()
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
-  const [budget, setBudget] = useState<any>(null)
-  const [customer, setCustomer] = useState<any>(null)
-  const [vehicle, setVehicle] = useState<any>(null)
+  const [budget, setBudget] = useState<Budget | null>(null)
+  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(true)
 
   const { id } = React.use(params);
@@ -57,7 +58,6 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         budgetData.date = new Date(budgetData.date);
         setBudget(budgetData);
 
-        // Tentar buscar cliente e veículo, mas não falhar se não forem encontrados
         let customerData = null;
         let vehicleData = null;
         
@@ -89,7 +89,6 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
       } catch (error: any) {
         console.error("Error fetching budget details:", error);
         
-        // Se for um erro 404, mostrar pagina de not found
         if (error.message && (error.message.includes('404') || error.message.includes('not found'))) {
           toast({
             title: "Orçamento não encontrado",
@@ -190,7 +189,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <PageHeader title={`Orçamento #${budget._id.toString().slice(-6)}`} description="Detalhes do orçamento" />
+          <PageHeader title={`Orçamento #${budget.id.slice(-6)}`} description="Detalhes do orçamento" />
         </div>
 
         {/* Status Badge */}
@@ -224,7 +223,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
                 <User className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <div className="text-xs text-muted-foreground">Cliente</div>
-                  <Link href={`/customers/${customer._id}`} className="text-sm font-medium hover:underline">
+                  <Link href={`/customers/${customer.id}`} className="text-sm font-medium hover:underline">
                     {customer.name}
                   </Link>
                 </div>
@@ -279,9 +278,9 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {budget.services.map((service: any) => (
+                {budget.services.map((service) => (
                   <div
-                    key={service._id || service.id}
+                    key={service.id}
                     className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
                   >
                     <div className="flex-1">
@@ -315,9 +314,9 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {budget.parts.map((part: any) => (
+                {budget.parts.map((part) => (
                   <div
-                    key={part._id || part.id}
+                    key={part.id}
                     className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0"
                   >
                     <div className="flex-1">

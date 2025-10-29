@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, Phone, Mail, MapPin, FileText, Plus, Car } from "lucide-react"
 import { apiService } from "@/lib/api"
-import type { Customer } from "@/lib/types"
+import type { Customer, Vehicle } from "@/lib/types"
 
 import AuthGuard from "@/components/auth-guard";
 
@@ -23,7 +23,7 @@ export default function CustomerDetailPage() {
 function CustomerDetailContent() {
   const params = useParams<{ id: string }>();
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -119,8 +119,8 @@ function CustomerDetailContent() {
               <div className="space-y-3">
                 {vehicles.map((vehicle) => (
                   <Link 
-                    key={vehicle._id || vehicle.id} 
-                    href={`/customers/${params.id}/vehicles/${vehicle._id || vehicle.id}`}
+                    key={vehicle.id} 
+                    href={`/customers/${params.id}/vehicles/${vehicle.id}`}
                     className="block"
                   >
                     <div className="p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">

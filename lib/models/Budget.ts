@@ -32,6 +32,15 @@ const budgetSchema = new Schema<Budget & { userId: string }>({
   discount: { type: Number, default: 0 },
   total: { type: Number, required: true },
   notes: String,
+}, {
+  toJSON: {
+    virtuals: true,
+    transform: function(doc, ret) {
+      ret.id = ret._id.toString();
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
 });
 
 export const BudgetModel = models.Budget || model<Budget & { userId: string }>('Budget', budgetSchema);

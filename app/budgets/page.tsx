@@ -59,7 +59,7 @@ interface PartItem {
 }
 
 interface Budget {
-  _id: string;
+  id: string;
   customerId: string;
   vehicleId: string;
   date: Date;
@@ -99,7 +99,7 @@ function BudgetsContent() {
 
         // Convert dates for budgets and remove duplicates by ID
         const uniqueBudgets = budgetsData.filter((budget, index, self) =>
-          index === self.findIndex(b => b._id === budget._id)
+          index === self.findIndex(b => b.id === budget.id)
         );
 
         const formattedBudgets = uniqueBudgets.map(budget => ({
@@ -171,13 +171,13 @@ function BudgetsContent() {
                 const vehicle = getVehicleById(budget.vehicleId);
 
                 return (
-                  <Link key={budget._id} href={`/budgets/${budget._id}`} className="block">
+                  <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
                     <Card className="hover:bg-accent/50 transition-colors">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground">Orçamento #{budget._id.toString().slice(-6)}</h3>
+                              <h3 className="font-semibold text-foreground">Orçamento #{budget.id.slice(-6)}</h3>
                               <Badge
                                 variant={
                                   budget.status === "approved"

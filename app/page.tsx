@@ -12,7 +12,7 @@ import { AppHeader } from "@/components/app-header"
 import AuthGuard from "@/components/auth-guard";
 
 interface Customer {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -58,7 +58,7 @@ interface PartItem {
 }
 
 interface Budget {
-  _id: string;
+  id: string;
   customerId: string;
   vehicleId: string;
   date: Date;
@@ -73,7 +73,7 @@ interface Budget {
 }
 
 interface Order {
-  _id: string;
+  id: string;
   budgetId: string;
   customerId: string;
   vehicleId: string;
@@ -114,11 +114,11 @@ function DashboardContent() {
         
         // Converter datas para objetos Date e remover duplicatas
         const uniqueBudgets = budgetsData.filter((budget, index, self) =>
-          index === self.findIndex(b => b._id === budget._id)
+          index === self.findIndex(b => b.id === budget.id)
         );
         
         const uniqueOrders = ordersData.filter((order, index, self) =>
-          index === self.findIndex(o => o._id === order._id)
+          index === self.findIndex(o => o.id === order.id)
         );
         
         const formattedBudgets = uniqueBudgets.map(budget => ({
@@ -170,7 +170,7 @@ function DashboardContent() {
     .slice(0, 3)
 
   // Função para obter cliente por ID
-  const getCustomerById = (id: string) => customers.find(c => c._id === id);
+  const getCustomerById = (id: string) => customers.find(c => c.id === id);
 
   // Função para obter veículo por ID (você precisará implementar isso no futuro)
   const getVehicleById = (id: string) => {
@@ -303,7 +303,7 @@ function DashboardContent() {
                     const vehicle = getVehicleById(order.vehicleId)
                     
                     return (
-                      <Link key={order._id} href={`/orders/${order._id}`}>
+                      <Link key={order.id} href={`/orders/${order.id}`}>
                         <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
                           <div className="flex items-center gap-3 flex-1">
                             <div
@@ -319,7 +319,7 @@ function DashboardContent() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">OS #{order._id.toString().slice(-6)}</span>
+                                <span className="font-medium text-sm">OS #{order.id.slice(-6)}</span>
                                 <Badge
                                   variant={
                                     order.status === "completed"
@@ -383,7 +383,7 @@ function DashboardContent() {
                     const vehicle = getVehicleById(budget.vehicleId)
                     
                     return (
-                      <Link key={budget._id} href={`/budgets/${budget._id}`}>
+                      <Link key={budget.id} href={`/budgets/${budget.id}`}>
                         <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
                           <div className="flex items-center gap-3 flex-1">
                             <div
@@ -397,7 +397,7 @@ function DashboardContent() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">Orçamento #{budget._id.toString().slice(-6)}</span>
+                                <span className="font-medium text-sm">Orçamento #{budget.id.slice(-6)}</span>
                                 <Badge
                                   variant={
                                     budget.status === "approved"

@@ -13,7 +13,14 @@ const customerSchema = new Schema<Customer & { userId: string }>({
   userId: { type: String, required: true }, // ID do usuário proprietário
   createdAt: { type: Date, default: Date.now },
 }, {
-  toJSON: { virtuals: true },
+  toJSON: {
+    virtuals: true,
+    transform: function(doc, ret) {
+      ret.id = ret._id.toString();
+      delete ret._id;
+      delete ret.__v;
+    }
+  },
   toObject: { virtuals: true }
 });
 
