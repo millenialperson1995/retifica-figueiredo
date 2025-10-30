@@ -448,37 +448,43 @@ export async function PUT(
     // If the budget status was changed to 'approved', deduct parts from inventory
     if (existingBudget.status !== 'approved' && updatedBudget.status === 'approved') {
       try {
-        // Process each part in the budget
-        for (const part of updatedBudget.parts) {
-          if (part.inventoryId) {
-            // Find the inventory item
-            const inventoryItem = await InventoryItemModel.findOne({ 
-              _id: part.inventoryId, 
-              userId: auth.userId 
-            });
-            
-            if (inventoryItem) {
-              // Check if there's enough quantity in stock
-              if (inventoryItem.quantity < part.quantity) {
-                return new Response(JSON.stringify({ 
-                  error: `Quantidade insuficiente em estoque para o item '${inventoryItem.name}'. Estoque disponível: ${inventoryItem.quantity}, solicitado: ${part.quantity}` 
-                }), {
-                  status: 400,
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                });
-              }
+        const session = await mongoose.startSession();
+        await session.withTransaction(async () => {
+          // Process each part in the budget
+          for (const part of updatedBudget.parts) {
+            if (part.inventoryId) {
+              // Find the inventory item using findOneAndUpdate to ensure atomicity
+              const inventoryItem = await InventoryItemModel.findOneAndUpdate(
+                { 
+                  _id: part.inventoryId, 
+                  userId: auth.userId,
+                  quantity: { $gte: part.quantity } // Ensure there's enough quantity
+                },
+                { 
+                  $inc: { quantity: -part.quantity } // Atomically decrease quantity
+                },
+                { 
+                  session, // Use the same session for the transaction
+                  new: true // Return updated document
+                }
+              );
               
-              // Deduct the quantity from inventory
-              inventoryItem.quantity -= part.quantity;
-              await inventoryItem.save();
+              if (!inventoryItem) {
+                // If we couldn't update the inventory item (insufficient stock), throw error to abort transaction
+                throw new Error(`Quantidade insuficiente em estoque para o item com ID ${part.inventoryId}.`);
+              }
             }
           }
-        }
+        });
       } catch (inventoryError) {
         console.error('Error updating inventory:', inventoryError);
-        // Rollback budget update if inventory update fails?
+        // Rollback budget update by reverting the status
+        await BudgetModel.findOneAndUpdate(
+          { _id: id, userId: auth.userId },
+          { status: existingBudget.status },
+          { new: true }
+        );
+        
         return new Response(JSON.stringify({ 
           error: 'Error updating inventory. Budget status was not changed.' 
         }), {

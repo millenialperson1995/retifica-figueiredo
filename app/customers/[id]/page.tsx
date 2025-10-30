@@ -124,14 +124,14 @@ function CustomerDetailContent() {
           </CardHeader>
           <CardContent>
             {vehicles.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {vehicles.map((vehicle) => (
                   <Link 
                     key={vehicle.id} 
                     href={`/customers/${params.id}/vehicles/${vehicle.id}`}
                     className="block"
                   >
-                    <div className="p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                    <div className="p-5 rounded-xl border border-border bg-card hover:bg-accent/30 transition-all duration-200 shadow-sm hover:shadow-md">
                       <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
                       <div className="text-sm text-muted-foreground">
                         Placa: {vehicle.plate} • Ano: {vehicle.year}
@@ -153,14 +153,14 @@ function CustomerDetailContent() {
           </CardHeader>
           <CardContent>
             {budgets.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {budgets.slice(0, 5).map((budget) => (
                   <Link 
                     key={budget.id} 
                     href={`/budgets/${budget.id}`}
                     className="block"
                   >
-                    <div className="p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                    <div className="p-5 rounded-xl border border-border bg-card hover:bg-accent/30 transition-all duration-200 shadow-sm hover:shadow-md">
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="font-medium">#{budget.id?.slice(-6).toUpperCase()}</div>

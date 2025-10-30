@@ -186,15 +186,15 @@ function BudgetsContent() {
             </Card>
           ) : (
             <>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {currentBudgets.map((budget) => {
                   const customer = getCustomerById(budget.customerId);
                   const vehicle = getVehicleById(budget.vehicleId);
 
                   return (
                     <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
-                      <Card className="hover:bg-accent/50 transition-colors">
-                        <CardContent className="p-4">
+                      <Card className="hover:bg-accent/50 transition-colors shadow-sm hover:shadow-md">
+                        <CardContent className="p-5">
                           <div className="flex items-start justify-between mb-3">
                             <div>
                               <div className="flex items-center gap-2 mb-1">

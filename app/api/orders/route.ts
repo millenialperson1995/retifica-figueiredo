@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { OrderModel } from '../../../lib/models/Order';
 import { InventoryItemModel } from '../../../lib/models/InventoryItem';
@@ -381,33 +382,33 @@ export async function POST(req: NextRequest) {
     // This handles the case where an order is created directly without going through the budget approval process
     if ((!body.budgetId || body.budgetId === "none") && savedOrder.parts && savedOrder.parts.length > 0) {
       try {
-        for (const part of savedOrder.parts) {
-          if (part.inventoryId) {
-            // Find the inventory item
-            const inventoryItem = await InventoryItemModel.findOne({ 
-              _id: part.inventoryId, 
-              userId: auth.userId 
-            });
-            
-            if (inventoryItem) {
-              // Check if there's enough quantity in stock
-              if (inventoryItem.quantity < part.quantity) {
-                return new Response(JSON.stringify({ 
-                  error: `Quantidade insuficiente em estoque para o item '${inventoryItem.name}'. Estoque disponível: ${inventoryItem.quantity}, solicitado: ${part.quantity}` 
-                }), {
-                  status: 400,
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                });
-              }
+        const session = await mongoose.startSession();
+        await session.withTransaction(async () => {
+          for (const part of savedOrder.parts) {
+            if (part.inventoryId) {
+              // Find and update the inventory item atomically
+              const inventoryItem = await InventoryItemModel.findOneAndUpdate(
+                { 
+                  _id: part.inventoryId, 
+                  userId: auth.userId,
+                  quantity: { $gte: part.quantity } // Ensure there's enough quantity
+                },
+                { 
+                  $inc: { quantity: -part.quantity } // Atomically decrease quantity
+                },
+                { 
+                  session, // Use the same session for the transaction
+                  new: true // Return updated document
+                }
+              );
               
-              // Deduct the quantity from inventory
-              inventoryItem.quantity -= part.quantity;
-              await inventoryItem.save();
+              if (!inventoryItem) {
+                // If we couldn't update the inventory item (insufficient stock), throw error to abort transaction
+                throw new Error(`Quantidade insuficiente em estoque para o item com ID ${part.inventoryId}.`);
+              }
             }
           }
-        }
+        });
       } catch (inventoryError) {
         console.error('Error updating inventory after direct order creation:', inventoryError);
         // Rollback order creation if inventory update fails

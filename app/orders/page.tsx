@@ -190,15 +190,15 @@ function OrdersContent() {
             </Card>
           ) : (
             <>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {currentOrders.map((order) => {
                   const customer = getCustomerById(order.customerId);
                   const vehicle = getVehicleById(order.vehicleId);
 
                   return (
                     <Link key={order.id} href={`/orders/${order.id}`} className="block">
-                      <Card className="hover:bg-accent/50 transition-colors">
-                        <CardContent className="p-4">
+                      <Card className="hover:bg-accent/50 transition-colors shadow-sm hover:shadow-md">
+                        <CardContent className="p-5">
                           <div className="flex items-start justify-between mb-3">
                             <div>
                               <div className="flex items-center gap-2 mb-1">

@@ -88,15 +88,15 @@ function CustomersContent() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {customers.map((customer) => {
                 // Note: Para uma implementação completa, você buscaria os veículos associados
                 // Por enquanto, usaremos um placeholder
                 const vehicleCount: number = 0; // Este valor viria de uma chamada à API de veículos
                 return (
                   <Link key={customer.id} href={`/customers/${customer.id}`}>
-                    <Card className="hover:bg-accent/50 transition-colors">
-                      <CardContent className="p-4">
+                    <Card className="hover:bg-accent/50 transition-colors shadow-sm hover:shadow-md">
+                      <CardContent className="p-5">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-semibold text-foreground mb-2">{customer.name}</h3>

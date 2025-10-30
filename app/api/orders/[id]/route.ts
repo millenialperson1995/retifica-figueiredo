@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import { connectToDatabase } from '../../../../lib/mongodb';
 import { OrderModel } from '../../../../lib/models/Order';
 import { InventoryItemModel } from '../../../../lib/models/InventoryItem';
