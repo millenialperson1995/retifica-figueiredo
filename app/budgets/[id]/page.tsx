@@ -31,6 +31,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(true)
+  const [existingOrder, setExistingOrder] = useState<any>(null)
 
   const { id } = params;
 
@@ -73,7 +74,10 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const budgetData = await apiService.getBudgetById(id);
+        const [budgetData, ordersData] = await Promise.all([
+          apiService.getBudgetById(id),
+          apiService.getOrders() // Get all orders to check if any are associated with this budget
+        ]);
         
         if (!budgetData) {
           notFound();
@@ -82,6 +86,12 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
 
         budgetData.date = new Date(budgetData.date);
         setBudget(budgetData);
+
+        // Check if any order is associated with this budget
+        const orderForThisBudget = ordersData.find((order: any) => order.budgetId === id);
+        if (orderForThisBudget) {
+          setExistingOrder(orderForThisBudget);
+        }
 
         let customerData = null;
         let vehicleData = null;
@@ -426,11 +436,20 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
             )}
           </div>
 
-          {budget.status === "approved" && (
+          {budget.status === "approved" && !existingOrder && (
             <Link href={`/orders/new?budgetId=${id}`}>
               <Button className="w-full">
                 <FileText className="w-4 h-4 mr-2" />
                 Criar Ordem de Serviço
+              </Button>
+            </Link>
+          )}
+          
+          {budget.status === "approved" && existingOrder && (
+            <Link href={`/orders/${existingOrder.id}`}>
+              <Button className="w-full" variant="secondary">
+                <FileText className="w-4 h-4 mr-2" />
+                Ver Ordem de Serviço Associada
               </Button>
             </Link>
           )}
