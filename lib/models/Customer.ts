@@ -10,6 +10,7 @@ const customerSchema = new Schema<Customer & { userId: string }>({
   city: { type: String, required: true },
   state: { type: String, required: true },
   zipCode: { type: String, required: true },
+  referencia: { type: String, required: false }, // Ponto de referência opcional
   userId: { type: String, required: true }, // ID do usuário proprietário
   createdAt: { type: Date, default: Date.now },
 }, {

@@ -8,6 +8,7 @@ export interface Customer {
   city: string
   state: string
   zipCode: string
+  referencia?: string // Ponto de referência opcional
   userId: string // ID do usuário proprietário
   createdAt: Date
 }
@@ -19,10 +20,9 @@ export interface Vehicle {
   brand: string
   model: string
   year: number
-  color: string
-  engineNumber?: string
-  chassisNumber?: string
-  notes?: string
+  engine: string // Motor do veículo
+  cylinder: string // Cilindro do veículo
+  chassisNumber: string // Número do chassi
   userId: string // ID do usuário proprietário
 }
 

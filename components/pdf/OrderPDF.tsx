@@ -57,23 +57,24 @@ interface PartItem {
   inventoryId?: string;
 }
 
-interface Budget {
+interface Order {
   id: string;
   customerId: string;
   vehicleId: string;
-  date: Date;
-  status: 'pending' | 'approved' | 'rejected';
+  startDate: Date;
+  estimatedEndDate: Date;
+  actualEndDate?: Date;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
   userId: string;
   services: ServiceItem[];
   parts: PartItem[];
-  subtotal: number;
-  discount: number;
   total: number;
   notes?: string;
+  mechanicNotes?: string;
 }
 
-interface BudgetPDFProps {
-  budget: Budget;
+interface OrderPDFProps {
+  order: Order;
   customer: Customer;
   vehicle: Vehicle;
   logoPath?: string;
@@ -231,10 +232,6 @@ const styles = StyleSheet.create({
   notesSection: {
     marginTop: 20,
   },
-  notesText: {
-    fontSize: 10,
-    fontFamily: 'Open Sans',
-  },
   serviceItemDescription: {
     fontSize: 10,
     fontFamily: 'Open Sans',
@@ -251,7 +248,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPath = '/logo.png' }) => {
+const OrderPDF: React.FC<OrderPDFProps> = ({ order, customer, vehicle, logoPath = '/logo.png' }) => {
   const formatDate = (date: Date) => {
     return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR });
   };
@@ -282,12 +279,27 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
         </View>
 
         {/* Título */}
-        <Text style={styles.title}>ORÇAMENTO N° {budget.id.slice(-6).toUpperCase()}</Text>
+        <Text style={styles.title}>ORDEM DE SERVIÇO N° {order.id.slice(-6).toUpperCase()}</Text>
 
         {/* Status */}
-        {budget.status === 'pending' && (
+        {order.status === 'pending' && (
           <Text style={styles.statusMessage}>
             Status: <Text style={styles.statusHighlight}>Pendente</Text>
+          </Text>
+        )}
+        {order.status === 'in-progress' && (
+          <Text style={styles.statusMessage}>
+            Status: <Text style={styles.statusHighlight}>Em Andamento</Text>
+          </Text>
+        )}
+        {order.status === 'completed' && (
+          <Text style={styles.statusMessage}>
+            Status: <Text style={styles.statusHighlight}>Concluída</Text>
+          </Text>
+        )}
+        {order.status === 'cancelled' && (
+          <Text style={styles.statusMessage}>
+            Status: <Text style={styles.statusHighlight}>Cancelada</Text>
           </Text>
         )}
 
@@ -319,13 +331,17 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
           </View>
         </View>
 
-        {/* Data do orçamento */}
-        <View style={{ alignItems: 'flex-end', marginBottom: 20 }}>
-          <Text style={styles.detailText}>Data do Orçamento: {formatDate(budget.date)}</Text>
+        {/* Datas da ordem de serviço */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.detailText}>Data de Início: {formatDate(order.startDate)}</Text>
+            <Text style={styles.detailText}>Previsão de Término: {formatDate(order.estimatedEndDate)}</Text>
+            {order.actualEndDate && <Text style={styles.detailText}>Data de Conclusão: {formatDate(order.actualEndDate)}</Text>}
+          </View>
         </View>
 
         {/* Tabela de serviços */}
-        {budget.services && budget.services.length > 0 && (
+        {order.services && order.services.length > 0 && (
           <>
             <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, fontFamily: 'Open Sans' }}>
               SERVIÇOS
@@ -345,7 +361,7 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
                   <Text style={styles.tableCellHeader}>TOTAL</Text>
                 </View>
               </View>
-              {budget.services.map((service, index) => (
+              {order.services.map((service, index) => (
                 <View key={index} style={styles.tableRow}>
                   <View style={styles.tableCol}>
                     <Text style={styles.tableCellLeft}>{service.description}</Text>
@@ -366,7 +382,7 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
         )}
 
         {/* Tabela de peças */}
-        {budget.parts && budget.parts.length > 0 && (
+        {order.parts && order.parts.length > 0 && (
           <>
             <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, marginTop: 10, fontFamily: 'Open Sans' }}>
               PEÇAS
@@ -386,7 +402,7 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
                   <Text style={styles.tableCellHeader}>TOTAL</Text>
                 </View>
               </View>
-              {budget.parts.map((part, index) => (
+              {order.parts.map((part, index) => (
                 <View key={index} style={styles.tableRow}>
                   <View style={styles.tableCol}>
                     <Text style={styles.tableCellLeft}>
@@ -409,23 +425,25 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
           </>
         )}
 
-        {/* Valores totais */}
+        {/* Valor total */}
         <View style={styles.totalSection}>
           <View style={styles.totalBox}>
-            <Text style={styles.totalText}>SUBTOTAL: {formatCurrency(budget.subtotal)}</Text>
-            {budget.discount > 0 && (
-              <Text style={styles.totalText}>DESCONTO: -{formatCurrency(budget.discount)}</Text>
-            )}
             <Text style={[styles.totalText, { fontWeight: 'bold', marginTop: 5 }]}>
-              TOTAL: {formatCurrency(budget.total)}
+              TOTAL: {formatCurrency(order.total)}
             </Text>
           </View>
         </View>
 
         {/* Notas adicionais */}
-        {budget.notes && (
+        {order.notes && (
           <View style={styles.notesSection}>
-            <Text style={styles.totalText}>Observações: {budget.notes}</Text>
+            <Text style={styles.totalText}>Observações: {order.notes}</Text>
+          </View>
+        )}
+
+        {order.mechanicNotes && (
+          <View style={styles.notesSection}>
+            <Text style={styles.totalText}>Anotações do Mecânico: {order.mechanicNotes}</Text>
           </View>
         )}
 
@@ -447,4 +465,4 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
   );
 };
 
-export default BudgetPDF;
+export default OrderPDF;

@@ -63,18 +63,15 @@ export async function GET(req: NextRequest) {
      *                   year:
      *                     type: number
      *                     description: Vehicle year
-     *                   color:
+     *                   engine:
      *                     type: string
-     *                     description: Vehicle color
-     *                   engineNumber:
+     *                     description: Vehicle engine
+     *                   cylinder:
      *                     type: string
-     *                     description: Engine number
+     *                     description: Vehicle cylinder
      *                   chassisNumber:
      *                     type: string
      *                     description: Chassis number
-     *                   notes:
-     *                     type: string
-     *                     description: Vehicle notes
      */
 
     // Filter vehicles by authenticated user ID
@@ -147,22 +144,18 @@ export async function POST(req: NextRequest) {
      *                 type: number
      *                 description: Vehicle year
      *                 example: 2018
-     *               color:
+     *               engine:
      *                 type: string
-     *                 description: Vehicle color
-     *                 example: "Prata"
-     *               engineNumber:
+     *                 description: Vehicle engine
+     *                 example: "1.0 8V"
+     *               cylinder:
      *                 type: string
-     *                 description: Engine number
-     *                 example: "ABC123456"
+     *                 description: Vehicle cylinder
+     *                 example: "4 cilindros"
      *               chassisNumber:
      *                 type: string
      *                 description: Chassis number
      *                 example: "9BWZZZ377VT004251"
-     *               notes:
-     *                 type: string
-     *                 description: Vehicle notes
-     *                 example: "Veículo com modificações no motor"
      *     responses:
      *       201:
      *         description: Vehicle created successfully
@@ -189,18 +182,15 @@ export async function POST(req: NextRequest) {
      *                 year:
      *                   type: number
      *                   description: Vehicle year
-     *                 color:
+     *                 engine:
      *                   type: string
-     *                   description: Vehicle color
-     *                 engineNumber:
+     *                   description: Vehicle engine
+     *                 cylinder:
      *                   type: string
-     *                   description: Engine number
+     *                   description: Vehicle cylinder
      *                 chassisNumber:
      *                   type: string
      *                   description: Chassis number
-     *                 notes:
-     *                   type: string
-     *                   description: Vehicle notes
      */
 
     const body = await req.json();

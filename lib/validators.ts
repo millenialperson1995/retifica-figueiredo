@@ -66,9 +66,37 @@ export function validateCPFOrCNPJ(value: string): boolean {
   return false
 }
 
+export function formatCPFOrCNPJ(value: string): string {
+  const cleaned = value.replace(/[^\d]/g, "")
+  if (cleaned.length <= 11) {
+    // CPF format: 123.456.789-01
+    return cleaned
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
+  } else if (cleaned.length <= 14) {
+    // CNPJ format: 12.345.678/0001-91
+    return cleaned
+      .replace(/(\d{2})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1/$2")
+      .replace(/(\d{4})(\d{1,2})$/, "$1-$2")
+  }
+  return value
+}
+
 export function validatePhone(phone: string): boolean {
   const cleaned = phone.replace(/[^\d]/g, "")
-  return cleaned.length >= 10 && cleaned.length <= 11
+  // For Brazilian numbers: 9-digit mobile (9XXXXXXXX) or 8-digit fixed (XXXXXXXX) plus DDD (2 digits)
+  // With DDD: should be either 10 digits (fixed) or 11 digits (mobile with '9')
+  if (cleaned.length === 11) {
+    // Must have '9' as 5th digit for mobile phones (after DDD)
+    return cleaned.charAt(2) === '9'
+  } else if (cleaned.length === 10) {
+    // Fixed line (no '9' after DDD)
+    return cleaned.charAt(2) !== '9'
+  }
+  return false
 }
 
 export function validateEmail(email: string): boolean {
@@ -105,10 +133,16 @@ export function formatCNPJ(value: string): string {
 
 export function formatPhone(value: string): string {
   const cleaned = value.replace(/[^\d]/g, "")
-  if (cleaned.length <= 10) {
+  if (cleaned.length <= 2) {
+    return cleaned
+  } else if (cleaned.length <= 6) {
+    return cleaned.replace(/(\d{2})(\d{0,4})/, "($1) $2")
+  } else if (cleaned.length <= 10) {
     return cleaned.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3")
+  } else if (cleaned.length <= 11) {
+    return cleaned.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3")
   }
-  return cleaned.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3")
+  return cleaned.substring(0, 11).replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")
 }
 
 export function formatPlate(value: string): string {

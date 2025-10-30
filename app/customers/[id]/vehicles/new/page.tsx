@@ -32,10 +32,9 @@ function NewVehicleContent({ params }: { params: Promise<{ id: string }> }) {
     brand: "",
     model: "",
     year: "",
-    color: "",
-    engineNumber: "",
-    chassisNumber: "",
-    notes: "",
+    engine: "", // Motor do veículo
+    cylinder: "", // Cilindro do veículo
+    chassisNumber: "", // Número do chassi
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -51,10 +50,9 @@ function NewVehicleContent({ params }: { params: Promise<{ id: string }> }) {
         brand: formData.brand,
         model: formData.model,
         year: parseInt(formData.year),
-        color: formData.color,
-        engineNumber: formData.engineNumber,
+        engine: formData.engine,
+        cylinder: formData.cylinder,
         chassisNumber: formData.chassisNumber,
-        notes: formData.notes,
       }
       
       // Send the vehicle data to the API
@@ -94,7 +92,7 @@ function NewVehicleContent({ params }: { params: Promise<{ id: string }> }) {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -116,36 +114,21 @@ function NewVehicleContent({ params }: { params: Promise<{ id: string }> }) {
         <form onSubmit={handleSubmit}>
           <Card>
             <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="plate">Placa *</Label>
-                  <Input
-                    id="plate"
-                    name="plate"
-                    value={formData.plate}
-                    onChange={handleChange}
-                    placeholder="ABC-1234"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="year">Ano *</Label>
-                  <Input
-                    id="year"
-                    name="year"
-                    type="number"
-                    value={formData.year}
-                    onChange={handleChange}
-                    placeholder="2020"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="plate">Placa *</Label>
+                <Input
+                  id="plate"
+                  name="plate"
+                  value={formData.plate}
+                  onChange={handleChange}
+                  placeholder="ABC-1234"
+                  required
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="brand">Marca *</Label>
+                  <Label htmlFor="brand">Fabricante *</Label>
                   <Input
                     id="brand"
                     name="brand"
@@ -169,50 +152,57 @@ function NewVehicleContent({ params }: { params: Promise<{ id: string }> }) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="color">Cor *</Label>
-                <Input
-                  id="color"
-                  name="color"
-                  value={formData.color}
-                  onChange={handleChange}
-                  placeholder="Prata"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="year">Ano/Mod *</Label>
+                  <Input
+                    id="year"
+                    name="year"
+                    type="number"
+                    value={formData.year}
+                    onChange={handleChange}
+                    placeholder="2020"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="engine">Motor *</Label>
+                  <Input
+                    id="engine"
+                    name="engine"
+                    value={formData.engine}
+                    onChange={handleChange}
+                    placeholder="1.0 8V"
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="engineNumber">Número do Motor</Label>
-                <Input
-                  id="engineNumber"
-                  name="engineNumber"
-                  value={formData.engineNumber}
-                  onChange={handleChange}
-                  placeholder="ABC123456"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cylinder">Cilindro *</Label>
+                  <Input
+                    id="cylinder"
+                    name="cylinder"
+                    value={formData.cylinder}
+                    onChange={handleChange}
+                    placeholder="4 cilindros"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="chassisNumber">Número do Chassi</Label>
-                <Input
-                  id="chassisNumber"
-                  name="chassisNumber"
-                  value={formData.chassisNumber}
-                  onChange={handleChange}
-                  placeholder="9BWZZZ377VT004251"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações</Label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  placeholder="Informações adicionais sobre o veículo"
-                  rows={3}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="chassisNumber">Número *</Label>
+                  <Input
+                    id="chassisNumber"
+                    name="chassisNumber"
+                    value={formData.chassisNumber}
+                    onChange={handleChange}
+                    placeholder="9BWZZZ377VT004251"
+                    required
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

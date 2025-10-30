@@ -6,7 +6,7 @@ import { notFound, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { ArrowLeft, User, Car, Calendar, Clock, FileText, CheckCircle, XCircle, PlayCircle, AlertCircle } from "lucide-react"
+import { ArrowLeft, User, Car, Calendar, Clock, FileText, CheckCircle, XCircle, PlayCircle, AlertCircle, Loader2, Download } from "lucide-react"
 import { apiService } from "@/lib/api"
 import {
   AlertDialog,
@@ -22,18 +22,35 @@ import AuthGuard from "@/components/auth-guard"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "@/components/ui/use-toast"
+import { useOrderPDF } from "@/components/pdf/useOrderPDF";
 
-// Interfaces to match data structure
+// Interfaces to match data structure (should match types in lib/types.ts)
 interface Customer {
   id: string;
   name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  referencia?: string; // Ponto de referência opcional
+  userId: string;
+  createdAt: Date;
 }
 
 interface Vehicle {
   id: string;
+  customerId: string;
   plate: string;
   brand: string;
   model: string;
+  year: number;
+  engine: string; // Motor do veículo
+  cylinder: string; // Cilindro do veículo
+  chassisNumber: string; // Número do chassi
+  userId: string;
 }
 
 interface Order {
@@ -44,6 +61,7 @@ interface Order {
   estimatedEndDate: string;
   actualEndDate?: string;
   status: "pending" | "in-progress" | "completed" | "cancelled";
+  userId: string;
   services: { id: string; description: string; quantity: number; unitPrice: number; total: number }[];
   parts: { id: string; description: string; partNumber?: string; quantity: number; unitPrice: number; total: number }[];
   total: number;
@@ -222,6 +240,9 @@ function OrderDetailContent({ id }: { id: string }) {
           </CardContent>
         </Card>
 
+        {/* PDF Download Button */}
+        <PDFDownloadButton order={order} customer={customer} vehicle={vehicle} />
+        
         <Link href={`/orders/${id}/edit`} passHref>
           <Button variant="outline" className="w-full">Editar</Button>
         </Link>
@@ -293,6 +314,41 @@ function ListItemCard({ title, items }: { title: string, items: { id: string, de
     </Card>
   )
 }
+
+// Componente para o botão de download do PDF
+const PDFDownloadButton = ({ order, customer, vehicle }: { order: Order, customer: Customer, vehicle: Vehicle }) => {
+  // Verificar se os dados necessários estão presentes
+  if (!customer || !vehicle || !order) {
+    return null; // ou um botão desabilitado com mensagem explicativa
+  }
+
+  const { instance, downloadPDF } = useOrderPDF({
+    order,
+    customer,
+    vehicle,
+  });
+
+  return (
+    <Button 
+      variant="outline" 
+      className="w-full mb-2"
+      onClick={downloadPDF}
+      disabled={instance.loading}
+    >
+      {instance.loading ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Gerando PDF...
+        </>
+      ) : (
+        <>
+          <Download className="w-4 h-4 mr-2" />
+          Baixar PDF
+        </>
+      )}
+    </Button>
+  );
+};
 
 function OrderSkeleton() {
   return (

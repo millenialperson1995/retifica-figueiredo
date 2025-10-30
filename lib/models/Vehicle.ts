@@ -7,10 +7,9 @@ const vehicleSchema = new Schema<Vehicle & { userId: string }>({
   brand: { type: String, required: true },
   model: { type: String, required: true },
   year: { type: Number, required: true },
-  color: { type: String, required: true },
-  engineNumber: String,
-  chassisNumber: String,
-  notes: String,
+  engine: { type: String, required: true }, // Motor do veículo
+  cylinder: { type: String, required: true }, // Cilindro do veículo
+  chassisNumber: { type: String, required: true }, // Número do chassi
   userId: { type: String, required: true }, // ID do usuário proprietário
 }, {
   toJSON: {

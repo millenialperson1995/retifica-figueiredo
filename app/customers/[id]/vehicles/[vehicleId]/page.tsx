@@ -83,11 +83,11 @@ function VehicleDetailContent() {
                 <div className="text-sm font-medium">{vehicle.plate}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Ano</div>
+                <div className="text-xs text-muted-foreground">Ano/Mod</div>
                 <div className="text-sm font-medium">{vehicle.year}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Marca</div>
+                <div className="text-xs text-muted-foreground">Fabricante</div>
                 <div className="text-sm font-medium">{vehicle.brand}</div>
               </div>
               <div>
@@ -95,31 +95,19 @@ function VehicleDetailContent() {
                 <div className="text-sm font-medium">{vehicle.model}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Cor</div>
-                <div className="text-sm font-medium">{vehicle.color}</div>
+                <div className="text-xs text-muted-foreground">Motor</div>
+                <div className="text-sm font-medium">{vehicle.engine}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Cilindro</div>
+                <div className="text-sm font-medium">{vehicle.cylinder}</div>
               </div>
             </div>
 
-            {vehicle.engineNumber && (
-              <div>
-                <div className="text-xs text-muted-foreground">Número do Motor</div>
-                <div className="text-sm font-medium">{vehicle.engineNumber}</div>
-              </div>
-            )}
-
-            {vehicle.chassisNumber && (
-              <div>
-                <div className="text-xs text-muted-foreground">Número do Chassi</div>
-                <div className="text-sm font-medium">{vehicle.chassisNumber}</div>
-              </div>
-            )}
-
-            {vehicle.notes && (
-              <div>
-                <div className="text-xs text-muted-foreground">Observações</div>
-                <div className="text-sm">{vehicle.notes}</div>
-              </div>
-            )}
+            <div>
+              <div className="text-xs text-muted-foreground">Número</div>
+              <div className="text-sm font-medium">{vehicle.chassisNumber}</div>
+            </div>
           </CardContent>
         </Card>
 

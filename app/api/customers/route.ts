@@ -72,6 +72,9 @@ export async function GET(req: NextRequest) {
      *                   zipCode:
      *                     type: string
      *                     description: Customer zip code
+     *                   referencia:
+     *                     type: string
+     *                     description: Customer reference point (optional)
      *                   createdAt:
      *                     type: string
      *                     description: Customer creation date
@@ -159,6 +162,10 @@ export async function POST(req: NextRequest) {
      *                 type: string
      *                 description: Customer zip code
      *                 example: "01234-567"
+     *               referencia:
+     *                 type: string
+     *                 description: Customer reference point (optional)
+     *                 example: "Próximo à padaria do João"
      *     responses:
      *       201:
      *         description: Customer created successfully
@@ -194,6 +201,9 @@ export async function POST(req: NextRequest) {
      *                 zipCode:
      *                   type: string
      *                   description: Customer zip code
+     *                 referencia:
+     *                   type: string
+     *                   description: Customer reference point (optional)
      *                 createdAt:
      *                   type: string
      *                   description: Customer creation date
