@@ -189,6 +189,7 @@ export async function POST(req: NextRequest) {
     const service = new StandardServiceModel({
       ...body,
       userId: auth.userId, // Associar o serviço padrão ao usuário autenticado
+      updatedBy: auth.userId, // Registrar quem criou/atualizou
     });
     const savedService = await service.save();
 

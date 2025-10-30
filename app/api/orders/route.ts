@@ -375,6 +375,7 @@ export async function POST(req: NextRequest) {
     const order = new OrderModel({
       ...body,
       userId: auth.userId, // Associar a ordem de serviço ao usuário autenticado
+      updatedBy: auth.userId, // Registrar quem criou/atualizou
     });
     const savedOrder = await order.save();
 
@@ -394,7 +395,8 @@ export async function POST(req: NextRequest) {
                   quantity: { $gte: part.quantity } // Ensure there's enough quantity
                 },
                 { 
-                  $inc: { quantity: -part.quantity } // Atomically decrease quantity
+                  $inc: { quantity: -part.quantity }, // Atomically decrease quantity
+                  $set: { updatedBy: auth.userId } // Register who updated
                 },
                 { 
                   session, // Use the same session for the transaction

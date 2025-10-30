@@ -246,10 +246,10 @@ export async function PUT(
     const { id } = resolvedParams;
     const body = await req.json();
     
-    // Update customer by ID and authenticated user ID
+    // Update customer by ID and authenticated user ID, including who made the update
     const updatedCustomer = await CustomerModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
-      { ...body },
+      { ...body, updatedBy: auth.userId },
       { new: true } // Return updated document
     );
     

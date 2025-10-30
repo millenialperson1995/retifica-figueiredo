@@ -219,6 +219,7 @@ export async function POST(req: NextRequest) {
     const inventoryItem = new InventoryItemModel({
       ...body,
       userId: auth.userId, // Associar o item de inventário ao usuário autenticado
+      updatedBy: auth.userId, // Registrar quem criou/atualizou
     });
     const savedInventoryItem = await inventoryItem.save();
 

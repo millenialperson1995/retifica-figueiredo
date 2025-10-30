@@ -215,6 +215,7 @@ export async function POST(req: NextRequest) {
     const customer = new CustomerModel({
       ...body,
       userId: auth.userId, // Associar o cliente ao usuário autenticado
+      updatedBy: auth.userId, // Registrar quem criou/atualizou
     });
     const savedCustomer = await customer.save();
 

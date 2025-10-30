@@ -262,10 +262,10 @@ export async function PUT(
     const { id } = resolvedParams;
     const body = await req.json();
     
-    // Update inventory item by ID and authenticated user ID
+    // Update inventory item by ID and authenticated user ID, including who made the update
     const updatedInventoryItem = await InventoryItemModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
-      { ...body },
+      { ...body, updatedBy: auth.userId },
       { new: true } // Return updated document
     );
     

@@ -179,6 +179,28 @@ export async function GET(
   }
 }
 
+// Function to validate status transitions
+function validateStatusTransition(entityType: 'order' | 'budget', fromStatus: string, toStatus: string): boolean {
+  if (entityType === 'order') {
+    const validTransitions: { [key: string]: string[] } = {
+      'pending': ['in-progress', 'cancelled'],
+      'in-progress': ['completed', 'cancelled'],
+      'completed': [], // No transitions from completed
+      'cancelled': []  // No transitions from cancelled
+    };
+    
+    return validTransitions[fromStatus]?.includes(toStatus) || false;
+  } else { // budget
+    const validTransitions: { [key: string]: string[] } = {
+      'pending': ['approved', 'rejected'],
+      'approved': [], // No transitions from approved
+      'rejected': []  // No transitions from rejected
+    };
+    
+    return validTransitions[fromStatus]?.includes(toStatus) || false;
+  }
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -429,10 +451,25 @@ export async function PUT(
       });
     }
     
-    // Update budget by ID and authenticated user ID
+    // Validate status transition
+    if (body.status !== undefined) {
+      const isValidTransition = validateStatusTransition('budget', existingBudget.status, body.status);
+      if (!isValidTransition) {
+        return new Response(JSON.stringify({ 
+          error: `Invalid status transition: ${existingBudget.status} to ${body.status}.` 
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+    }
+    
+    // Update budget by ID and authenticated user ID, including who made the update
     const updatedBudget = await BudgetModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
-      { ...body },
+      { ...body, updatedBy: auth.userId },
       { new: true } // Return updated document
     );
     
@@ -461,7 +498,8 @@ export async function PUT(
                   quantity: { $gte: part.quantity } // Ensure there's enough quantity
                 },
                 { 
-                  $inc: { quantity: -part.quantity } // Atomically decrease quantity
+                  $inc: { quantity: -part.quantity }, // Atomically decrease quantity
+                  $set: { updatedBy: auth.userId } // Register who updated
                 },
                 { 
                   session, // Use the same session for the transaction
@@ -481,7 +519,7 @@ export async function PUT(
         // Rollback budget update by reverting the status
         await BudgetModel.findOneAndUpdate(
           { _id: id, userId: auth.userId },
-          { status: existingBudget.status },
+          { status: existingBudget.status, updatedBy: auth.userId },
           { new: true }
         );
         

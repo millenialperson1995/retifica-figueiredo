@@ -351,6 +351,7 @@ export async function POST(req: NextRequest) {
     const budget = new BudgetModel({
       ...body,
       userId: auth.userId, // Associar o orçamento ao usuário autenticado
+      updatedBy: auth.userId, // Registrar quem criou/atualizou
     });
     const savedBudget = await budget.save();
 

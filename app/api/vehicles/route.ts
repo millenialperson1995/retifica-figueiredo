@@ -197,6 +197,7 @@ export async function POST(req: NextRequest) {
     const vehicle = new VehicleModel({
       ...body,
       userId: auth.userId, // Associar o veículo ao usuário autenticado
+      updatedBy: auth.userId, // Registrar quem criou/atualizou
     });
     const savedVehicle = await vehicle.save();
 

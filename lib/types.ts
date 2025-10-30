@@ -11,6 +11,9 @@ export interface Customer {
   referencia?: string // Ponto de referência opcional
   userId: string // ID do usuário proprietário
   createdAt: Date
+  updatedAt: Date
+  updatedBy?: string // ID do usuário que fez a última atualização
+  version?: number; // Campo para controle de concorrência otimista
 }
 
 export interface Vehicle {
@@ -24,6 +27,10 @@ export interface Vehicle {
   cylinder: string // Cilindro do veículo
   chassisNumber: string // Número do chassi
   userId: string // ID do usuário proprietário
+  createdAt: Date
+  updatedAt: Date
+  updatedBy?: string // ID do usuário que fez a última atualização
+  version?: number; // Campo para controle de concorrência otimista
 }
 
 export interface ServiceItem {
@@ -45,6 +52,8 @@ export interface StandardService {
   userId: string // ID do usuário proprietário
   createdAt: Date
   updatedAt: Date
+  updatedBy?: string // ID do usuário que fez a última atualização
+  version?: number; // Campo para controle de concorrência otimista
 }
 
 export interface PartItem {
@@ -70,6 +79,9 @@ export interface Budget {
   discount: number
   total: number
   notes?: string
+  createdAt: Date
+  updatedAt: Date
+  updatedBy?: string // ID do usuário que fez a última atualização
 }
 
 export interface InventoryItem {
@@ -86,6 +98,8 @@ export interface InventoryItem {
   userId: string // ID do usuário proprietário
   createdAt: Date
   updatedAt: Date
+  updatedBy?: string // ID do usuário que fez a última atualização
+  version?: number; // Campo para controle de concorrência otimista
 }
 
 export interface Order {
@@ -103,4 +117,18 @@ export interface Order {
   total: number
   notes?: string
   mechanicNotes?: string
+  createdAt: Date
+  updatedAt: Date
+  updatedBy?: string // ID do usuário que fez a última atualização
+}
+
+export interface IStatusHistory {
+  id: string;
+  entityId: string; // ID da entidade (order ou budget)
+  entityType: 'order' | 'budget'; // Tipo da entidade
+  fromStatus: string;
+  toStatus: string;
+  userId: string; // ID do usuário que fez a alteração
+  timestamp: Date;
+  notes?: string; // Notas opcionais sobre a mudança
 }

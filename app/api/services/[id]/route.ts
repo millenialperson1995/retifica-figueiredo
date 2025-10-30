@@ -232,10 +232,10 @@ export async function PUT(
     const { id } = resolvedParams;
     const body = await req.json();
     
-    // Update standard service by ID and authenticated user ID
+    // Update standard service by ID and authenticated user ID, including who made the update
     const updatedService = await StandardServiceModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
-      { ...body },
+      { ...body, updatedBy: auth.userId },
       { new: true } // Return updated document
     );
     

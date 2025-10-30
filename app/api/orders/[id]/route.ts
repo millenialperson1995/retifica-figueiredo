@@ -175,6 +175,28 @@ export async function GET(
   }
 }
 
+// Function to validate status transitions
+function validateStatusTransition(entityType: 'order' | 'budget', fromStatus: string, toStatus: string): boolean {
+  if (entityType === 'order') {
+    const validTransitions: { [key: string]: string[] } = {
+      'pending': ['in-progress', 'cancelled'],
+      'in-progress': ['completed', 'cancelled'],
+      'completed': [], // No transitions from completed
+      'cancelled': []  // No transitions from cancelled
+    };
+    
+    return validTransitions[fromStatus]?.includes(toStatus) || false;
+  } else { // budget
+    const validTransitions: { [key: string]: string[] } = {
+      'pending': ['approved', 'rejected'],
+      'approved': [], // No transitions from approved
+      'rejected': []  // No transitions from rejected
+    };
+    
+    return validTransitions[fromStatus]?.includes(toStatus) || false;
+  }
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -430,7 +452,22 @@ export async function PUT(
       });
     }
     
-    // Prevent modification of completed orders
+    // Validate status transition
+    if (body.status !== undefined) {
+      const isValidTransition = validateStatusTransition('order', existingOrder.status, body.status);
+      if (!isValidTransition) {
+        return new Response(JSON.stringify({ 
+          error: `Invalid status transition: ${existingOrder.status} to ${body.status}.` 
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+    }
+    
+    // Prevent modification of completed orders (except potentially adding notes or mechanic notes)
     if (existingOrder.status === 'completed') {
       return new Response(JSON.stringify({ 
         error: 'Cannot modify a completed order. Completed orders are locked to maintain historical integrity.' 
@@ -460,10 +497,10 @@ export async function PUT(
       });
     }
     
-    // Update order by ID and authenticated user ID
+    // Update order by ID and authenticated user ID, including who made the update
     const updatedOrder = await OrderModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
-      { ...body },
+      { ...body, updatedBy: auth.userId },
       { new: true } // Return updated document
     );
     

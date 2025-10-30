@@ -250,10 +250,10 @@ export async function PUT(
     const { id } = resolvedParams;
     const body = await req.json();
     
-    // Update vehicle by ID and authenticated user ID
+    // Update vehicle by ID and authenticated user ID, including who made the update
     const updatedVehicle = await VehicleModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
-      { ...body },
+      { ...body, updatedBy: auth.userId },
       { new: true } // Return updated document
     );
     
