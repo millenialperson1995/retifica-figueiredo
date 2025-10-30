@@ -1,12 +1,11 @@
 "use client"
-
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { ArrowLeft, User, Car, Calendar, FileText, CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, User, Car, Calendar, FileText, CheckCircle, XCircle, Loader2, Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
@@ -23,6 +22,7 @@ import AuthGuard from "@/components/auth-guard"
 import { apiService } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Budget, Customer, Vehicle } from "@/lib/types"
+import { useBudgetPDF } from "@/components/pdf/useBudgetPDF.tsx";
 
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   return (
@@ -43,6 +43,41 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
 
   const { id } = React.use(params);
+
+  // Componente para o botão de download do PDF
+  const BudgetPDFButton = ({ budget, customer, vehicle }: { budget: Budget, customer: Customer | null, vehicle: Vehicle | null }) => {
+    // Verificar se os dados necessários estão presentes
+    if (!customer || !vehicle) {
+      return null; // ou um botão desabilitado com mensagem explicativa
+    }
+
+    const { instance, downloadPDF } = useBudgetPDF({
+      budget,
+      customer,
+      vehicle,
+    });
+
+    return (
+      <Button 
+        variant="outline" 
+        className="w-full"
+        onClick={downloadPDF}
+        disabled={instance.loading}
+      >
+        {instance.loading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Gerando PDF...
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4 mr-2" />
+            Baixar PDF
+          </>
+        )}
+      </Button>
+    );
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -411,6 +446,9 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
               </Button>
             </Link>
           )}
+          
+          {/* Botão de download do PDF */}
+          <BudgetPDFButton budget={budget} customer={customer} vehicle={vehicle} />
         </div>
 
         {/* Approve Dialog */}
