@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { connectToDatabase } from '../../../../lib/mongodb';
 import { OrderModel } from '../../../../lib/models/Order';
+import { InventoryItemModel } from '../../../../lib/models/InventoryItem';
 import { authenticateAPIRequest } from '../../../../lib/auth';
 
 // Swagger documentation for individual order endpoint
@@ -432,6 +433,24 @@ export async function PUT(
     if (existingOrder.status === 'completed') {
       return new Response(JSON.stringify({ 
         error: 'Cannot modify a completed order. Completed orders are locked to maintain historical integrity.' 
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+    
+    // Before updating, check if parts are being added/modified for direct orders
+    // We should prevent modification of inventory parts after initial creation if it's a direct order
+    const isDirectOrder = !existingOrder.budgetId || existingOrder.budgetId === "none";
+    const partsChanged = JSON.stringify(existingOrder.parts) !== JSON.stringify(body.parts);
+    
+    if (isDirectOrder && partsChanged && existingOrder.parts && existingOrder.parts.length > 0) {
+      // This would require complex inventory management to handle adding/removing parts after creation
+      // For now, prevent this to maintain data integrity
+      return new Response(JSON.stringify({ 
+        error: 'Cannot modify parts in a direct order after creation. Create a new order instead.' 
       }), {
         status: 400,
         headers: {

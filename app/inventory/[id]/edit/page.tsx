@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -34,12 +34,14 @@ interface InventoryItemEditPageProps {
   };
 }
 
+import { useToast } from "@/hooks/use-toast";
 import AuthGuard from "@/components/auth-guard";
 
-export default function InventoryItemEditPage({ params }: InventoryItemEditPageProps) {
+export default function InventoryItemEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const awaitedParams = React.use(params);
   return (
     <AuthGuard>
-      <InventoryItemEditContent params={params} />
+      <InventoryItemEditContent params={awaitedParams} />
     </AuthGuard>
   );
 }
@@ -48,6 +50,7 @@ function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const [item, setItem] = useState<any | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof inventoryItemSchema>>({
     resolver: zodResolver(inventoryItemSchema),
@@ -116,11 +119,18 @@ function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
 
       const updated = await apiService.updateInventoryItem(params.id, payload);
       setIsSubmitting(false);
-      alert("Item atualizado com sucesso!");
+      toast({
+        title: "Item atualizado",
+        description: "O item foi atualizado com sucesso!",
+      });
       router.push(`/inventory/${params.id}`);
     } catch (err: any) {
       console.error('Erro ao atualizar item de inventário:', err);
-      alert(err?.message || 'Erro ao atualizar item');
+      toast({
+        title: "Erro ao atualizar item",
+        description: err?.message || 'Erro ao atualizar item',
+        variant: "destructive",
+      });
       setIsSubmitting(false);
     }
   }

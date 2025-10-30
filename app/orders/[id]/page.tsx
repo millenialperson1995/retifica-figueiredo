@@ -28,8 +28,9 @@ import { useOrderPDF } from "@/components/pdf/useOrderPDF";
 // Interfaces to match data structure (should match types in lib/types.ts)
 // Use shared types
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const awaitedParams = React.use(params);
+  const id = awaitedParams.id;
   return (
     <AuthGuard>
       <OrderDetailContent id={id} />

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import mongoose from 'mongoose';
 import { connectToDatabase } from '../../../../lib/mongodb';
 import { BudgetModel } from '../../../../lib/models/Budget';
+import { InventoryItemModel } from '../../../../lib/models/InventoryItem';
 import { authenticateAPIRequest } from '../../../../lib/auth';
 
 // Swagger documentation for individual budget endpoint
@@ -416,6 +417,18 @@ export async function PUT(
 
     const body = await req.json();
     
+    // Find existing budget
+    const existingBudget = await BudgetModel.findOne({ _id: id, userId: auth.userId });
+    
+    if (!existingBudget) {
+      return new Response(JSON.stringify({ error: 'Budget not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+    
     // Update budget by ID and authenticated user ID
     const updatedBudget = await BudgetModel.findOneAndUpdate(
       { _id: id, userId: auth.userId },
@@ -430,6 +443,51 @@ export async function PUT(
           'Content-Type': 'application/json',
         },
       });
+    }
+
+    // If the budget status was changed to 'approved', deduct parts from inventory
+    if (existingBudget.status !== 'approved' && updatedBudget.status === 'approved') {
+      try {
+        // Process each part in the budget
+        for (const part of updatedBudget.parts) {
+          if (part.inventoryId) {
+            // Find the inventory item
+            const inventoryItem = await InventoryItemModel.findOne({ 
+              _id: part.inventoryId, 
+              userId: auth.userId 
+            });
+            
+            if (inventoryItem) {
+              // Check if there's enough quantity in stock
+              if (inventoryItem.quantity < part.quantity) {
+                return new Response(JSON.stringify({ 
+                  error: `Quantidade insuficiente em estoque para o item '${inventoryItem.name}'. Estoque disponível: ${inventoryItem.quantity}, solicitado: ${part.quantity}` 
+                }), {
+                  status: 400,
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                });
+              }
+              
+              // Deduct the quantity from inventory
+              inventoryItem.quantity -= part.quantity;
+              await inventoryItem.save();
+            }
+          }
+        }
+      } catch (inventoryError) {
+        console.error('Error updating inventory:', inventoryError);
+        // Rollback budget update if inventory update fails?
+        return new Response(JSON.stringify({ 
+          error: 'Error updating inventory. Budget status was not changed.' 
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
     }
 
     return new Response(JSON.stringify(updatedBudget), {

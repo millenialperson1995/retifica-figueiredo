@@ -6,9 +6,9 @@ import { useParams, notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { ArrowLeft, Phone, Mail, MapPin, FileText, Plus, Car } from "lucide-react"
+import { ArrowLeft, Phone, Mail, MapPin, FileText, Plus, Car, DollarSign } from "lucide-react"
 import { apiService } from "@/lib/api"
-import type { Customer, Vehicle } from "@/lib/types"
+import type { Customer, Vehicle, Budget } from "@/lib/types"
 
 import AuthGuard from "@/components/auth-guard";
 
@@ -24,6 +24,7 @@ function CustomerDetailContent() {
   const params = useParams<{ id: string }>();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +39,13 @@ function CustomerDetailContent() {
           const allVehicles = await apiService.getVehicles();
           const customerVehicles = allVehicles.filter(v => v.customerId === params.id);
           setVehicles(customerVehicles);
+          
+          // Fetch all budgets and filter by customer ID
+          const allBudgets = await apiService.getBudgets();
+          const customerBudgets = allBudgets.filter(b => b.customerId === params.id);
+          // Sort by date, most recent first
+          customerBudgets.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setBudgets(customerBudgets);
         } catch (error) {
           console.error("Error fetching data:", error);
           setCustomer(null); // Set to null to trigger notFound
@@ -144,8 +152,48 @@ function CustomerDetailContent() {
             <CardTitle className="text-base">Orçamentos Recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center py-4">Nenhum orçamento encontrado</p>
-            {/* TODO: Implement budget listing once API is ready */}
+            {budgets.length > 0 ? (
+              <div className="space-y-3">
+                {budgets.slice(0, 5).map((budget) => (
+                  <Link 
+                    key={budget.id} 
+                    href={`/budgets/${budget.id}`}
+                    className="block"
+                  >
+                    <div className="p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium">#{budget.id?.slice(-6).toUpperCase()}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(budget.date).toLocaleDateString("pt-BR")}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {budget.total?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </div>
+                          <div className="text-xs">
+                            <span className={`px-2 py-0.5 rounded-full ${
+                              budget.status === "approved" 
+                                ? "bg-green-100 text-green-800" 
+                                : budget.status === "rejected" 
+                                ? "bg-red-100 text-red-800" 
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}>
+                              {budget.status === "pending" ? "Pendente" : 
+                               budget.status === "approved" ? "Aprovado" : 
+                               "Rejeitado"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum orçamento encontrado</p>
+            )}
           </CardContent>
         </Card>
 

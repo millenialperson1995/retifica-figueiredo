@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
 import { OrderModel } from '../../../lib/models/Order';
+import { InventoryItemModel } from '../../../lib/models/InventoryItem';
 import { authenticateAPIRequest } from '../../../lib/auth';
 
 // Swagger documentation for orders endpoint
@@ -375,6 +376,52 @@ export async function POST(req: NextRequest) {
       userId: auth.userId, // Associar a ordem de serviço ao usuário autenticado
     });
     const savedOrder = await order.save();
+
+    // If the order does not come from an approved budget and has parts with inventory, deduct from inventory
+    // This handles the case where an order is created directly without going through the budget approval process
+    if ((!body.budgetId || body.budgetId === "none") && savedOrder.parts && savedOrder.parts.length > 0) {
+      try {
+        for (const part of savedOrder.parts) {
+          if (part.inventoryId) {
+            // Find the inventory item
+            const inventoryItem = await InventoryItemModel.findOne({ 
+              _id: part.inventoryId, 
+              userId: auth.userId 
+            });
+            
+            if (inventoryItem) {
+              // Check if there's enough quantity in stock
+              if (inventoryItem.quantity < part.quantity) {
+                return new Response(JSON.stringify({ 
+                  error: `Quantidade insuficiente em estoque para o item '${inventoryItem.name}'. Estoque disponível: ${inventoryItem.quantity}, solicitado: ${part.quantity}` 
+                }), {
+                  status: 400,
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                });
+              }
+              
+              // Deduct the quantity from inventory
+              inventoryItem.quantity -= part.quantity;
+              await inventoryItem.save();
+            }
+          }
+        }
+      } catch (inventoryError) {
+        console.error('Error updating inventory after direct order creation:', inventoryError);
+        // Rollback order creation if inventory update fails
+        await OrderModel.findByIdAndDelete(savedOrder._id);
+        return new Response(JSON.stringify({ 
+          error: 'Error updating inventory. Order was not created.' 
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+    }
 
     return new Response(JSON.stringify(savedOrder), {
       status: 201,
