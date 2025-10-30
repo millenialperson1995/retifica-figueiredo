@@ -88,6 +88,21 @@ function OrdersContent() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Cálculos para paginação
+  const indexOfLastOrder = currentPage * itemsPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - itemsPerPage;
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+
+  // Função para ir para uma página específica
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,7 +126,12 @@ function OrdersContent() {
           actualEndDate: order.actualEndDate ? new Date(order.actualEndDate) : undefined
         }));
 
-        setOrders(formattedOrders);
+        // Ordenar as ordens por data de início, mais recentes primeiro
+        const sortedOrders = formattedOrders.sort((a, b) => 
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+        );
+
+        setOrders(sortedOrders);
         setCustomers(customersData);
         setVehicles(vehiclesData);
       } catch (error) {
@@ -169,84 +189,123 @@ function OrdersContent() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {orders.map((order) => {
-                const customer = getCustomerById(order.customerId);
-                const vehicle = getVehicleById(order.vehicleId);
+            <>
+              <div className="space-y-3">
+                {currentOrders.map((order) => {
+                  const customer = getCustomerById(order.customerId);
+                  const vehicle = getVehicleById(order.vehicleId);
 
-                return (
-                  <Link key={order.id} href={`/orders/${order.id}`} className="block">
-                    <Card className="hover:bg-accent/50 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground">OS #{order.id.slice(-6).toUpperCase()}</h3>
-                              <Badge
-                                variant={
-                                  order.status === "completed"
-                                    ? "default"
+                  return (
+                    <Link key={order.id} href={`/orders/${order.id}`} className="block">
+                      <Card className="hover:bg-accent/50 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-foreground">OS #{order.id.slice(-6).toUpperCase()}</h3>
+                                <Badge
+                                  variant={
+                                    order.status === "completed"
+                                      ? "default"
+                                      : order.status === "in-progress"
+                                        ? "secondary"
+                                        : order.status === "cancelled"
+                                          ? "destructive"
+                                          : "outline"
+                                  }
+                                >
+                                  {order.status === "completed"
+                                    ? "Concluída"
                                     : order.status === "in-progress"
-                                      ? "secondary"
+                                      ? "Em Andamento"
                                       : order.status === "cancelled"
-                                        ? "destructive"
-                                        : "outline"
-                                }
-                              >
-                                {order.status === "completed"
-                                  ? "Concluída"
-                                  : order.status === "in-progress"
-                                    ? "Em Andamento"
-                                    : order.status === "cancelled"
-                                      ? "Cancelada"
-                                      : "Pendente"}
-                              </Badge>
+                                        ? "Cancelada"
+                                        : "Pendente"}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3" />
+                                <span>Início: {order.startDate.toLocaleDateString("pt-BR")}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3" />
-                              <span>Início: {order.startDate.toLocaleDateString("pt-BR")}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-foreground">
-                              {order.total.toLocaleString("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              })}
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-foreground">
+                                {order.total.toLocaleString("pt-BR", {
+                                  style: "currency",
+                                  currency: "BRL",
+                                })}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{customer?.name || "Cliente não encontrado"}</span>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 text-sm">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">{customer?.name || "Cliente não encontrado"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Car className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">
+                                {vehicle?.brand || "Veículo"} {vehicle?.model || "temporário"} - {vehicle?.plate || "ABC-1234"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">
+                                Previsão: {order.estimatedEndDate.toLocaleDateString("pt-BR")}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Car className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              {vehicle?.brand || "Veículo"} {vehicle?.model || "temporário"} - {vehicle?.plate || "ABC-1234"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              Previsão: {order.estimatedEndDate.toLocaleDateString("pt-BR")}
-                            </span>
-                          </div>
-                        </div>
 
-                        {order.mechanicNotes && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            <p className="text-xs text-muted-foreground line-clamp-2">{order.mechanicNotes}</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
+                          {order.mechanicNotes && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <p className="text-xs text-muted-foreground line-clamp-2">{order.mechanicNotes}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+              
+              {/* Paginação */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando {indexOfFirstOrder + 1} a {Math.min(indexOfLastOrder, orders.length)} de {orders.length} OS
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Anterior
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                      <Button
+                        key={pageNumber}
+                        variant={currentPage === pageNumber ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(pageNumber)}
+                      >
+                        {pageNumber}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

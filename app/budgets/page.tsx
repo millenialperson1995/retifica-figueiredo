@@ -86,6 +86,21 @@ function BudgetsContent() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Cálculos para paginação
+  const indexOfLastBudget = currentPage * itemsPerPage;
+  const indexOfFirstBudget = indexOfLastBudget - itemsPerPage;
+  const currentBudgets = budgets.slice(indexOfFirstBudget, indexOfLastBudget);
+  const totalPages = Math.ceil(budgets.length / itemsPerPage);
+
+  // Função para ir para uma página específica
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,7 +122,12 @@ function BudgetsContent() {
           date: new Date(budget.date)
         }));
 
-        setBudgets(formattedBudgets);
+        // Ordenar os orçamentos por data, mais recentes primeiro
+        const sortedBudgets = formattedBudgets.sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
+        setBudgets(sortedBudgets);
         setCustomers(customersData);
         setVehicles(vehiclesData);
       } catch (error) {
@@ -165,74 +185,113 @@ function BudgetsContent() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {budgets.map((budget) => {
-                const customer = getCustomerById(budget.customerId);
-                const vehicle = getVehicleById(budget.vehicleId);
+            <>
+              <div className="space-y-3">
+                {currentBudgets.map((budget) => {
+                  const customer = getCustomerById(budget.customerId);
+                  const vehicle = getVehicleById(budget.vehicleId);
 
-                return (
-                  <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
-                    <Card className="hover:bg-accent/50 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-foreground">Orçamento #{budget.id.slice(-6).toUpperCase()}</h3>
-                              <Badge
-                                variant={
-                                  budget.status === "approved"
-                                    ? "default"
+                  return (
+                    <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
+                      <Card className="hover:bg-accent/50 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-foreground">Orçamento #{budget.id.slice(-6).toUpperCase()}</h3>
+                                <Badge
+                                  variant={
+                                    budget.status === "approved"
+                                      ? "default"
+                                      : budget.status === "rejected"
+                                        ? "destructive"
+                                        : "secondary"
+                                  }
+                                >
+                                  {budget.status === "approved"
+                                    ? "Aprovado"
                                     : budget.status === "rejected"
-                                      ? "destructive"
-                                      : "secondary"
-                                }
-                              >
-                                {budget.status === "approved"
-                                  ? "Aprovado"
-                                  : budget.status === "rejected"
-                                    ? "Rejeitado"
-                                    : "Pendente"}
-                              </Badge>
+                                      ? "Rejeitado"
+                                      : "Pendente"}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3" />
+                                <span>{budget.date.toLocaleDateString("pt-BR")}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3" />
-                              <span>{budget.date.toLocaleDateString("pt-BR")}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-foreground">
-                              {budget.total.toLocaleString("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              })}
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-foreground">
+                                {budget.total.toLocaleString("pt-BR", {
+                                  style: "currency",
+                                  currency: "BRL",
+                                })}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{customer?.name || "Cliente não encontrado"}</span>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 text-sm">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">{customer?.name || "Cliente não encontrado"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Car className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">
+                                {vehicle?.brand || "Veículo"} {vehicle?.model || "temporário"} - {vehicle?.plate || "ABC-1234"}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Car className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              {vehicle?.brand || "Veículo"} {vehicle?.model || "temporário"} - {vehicle?.plate || "ABC-1234"}
-                            </span>
-                          </div>
-                        </div>
 
-                        {budget.notes && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            <p className="text-xs text-muted-foreground line-clamp-2">{budget.notes}</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
+                          {budget.notes && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <p className="text-xs text-muted-foreground line-clamp-2">{budget.notes}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+              
+              {/* Paginação */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando {indexOfFirstBudget + 1} a {Math.min(indexOfLastBudget, budgets.length)} de {budgets.length} orçamentos
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Anterior
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                      <Button
+                        key={pageNumber}
+                        variant={currentPage === pageNumber ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(pageNumber)}
+                      >
+                        {pageNumber}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
