@@ -14,6 +14,7 @@ import { ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
 import type { ServiceItem, PartItem, Budget, InventoryItem, StandardService } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiService } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface BudgetFormProps {
   budget?: Budget;
@@ -35,6 +36,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   const [allVehicles, setAllVehicles] = useState<any[]>([]);
   const [standardServices, setStandardServices] = useState<StandardService[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const { toast } = useToast();
 
   const vehicles = customerId ? allVehicles.filter((v) => v.customerId === customerId) : [];
 
@@ -67,7 +69,11 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
         setStandardServices((servicesData || []).filter((s: any) => s.isActive));
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        alert("Erro ao carregar dados: Não foi possível carregar os clientes, veículos, inventário ou serviços");
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os clientes, veículos, inventário ou serviços",
+          variant: "destructive",
+        });
       }
     };
 
@@ -189,19 +195,31 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
       error
     });
 
-    alert(message);
+    toast({
+      title: "Erro ao salvar orçamento",
+      description: message,
+      variant: "destructive",
+    });
 };
 
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!customerId || !vehicleId) {
-      alert("Erro de validação: Selecione um cliente e um veículo");
+      toast({
+        title: "Erro de validação",
+        description: "Selecione um cliente e um veículo",
+        variant: "destructive",
+      });
       return;
     }
 
     if (services.length === 0 || services.every((s) => !s.description.trim())) {
-      alert("Erro de validação: Adicione pelo menos um serviço");
+      toast({
+        title: "Erro de validação",
+        description: "Adicione pelo menos um serviço",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -229,7 +247,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         await apiService.createBudget(newBudget);
       }
 
-      alert(isEditing ? "Orçamento atualizado com sucesso!" : "Orçamento criado com sucesso!");
+      toast({
+        title: isEditing ? "Orçamento atualizado" : "Orçamento criado",
+        description: isEditing ? "O orçamento foi atualizado com sucesso!" : "O orçamento foi criado com sucesso!",
+      });
       router.push("/budgets");
     } catch (error) {
       await handleError(error);

@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { notFound, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -7,16 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, User, Car, Calendar, FileText, CheckCircle, XCircle, Loader2, Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import AuthGuard from "@/components/auth-guard"
 import { apiService } from "@/lib/api"
@@ -25,9 +15,10 @@ import { Budget, Customer, Vehicle } from "@/lib/types"
 import { useBudgetPDF } from "@/components/pdf/useBudgetPDF";
 
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
+  const resolvedParams = use(params as any);
   return (
     <AuthGuard>
-      <BudgetDetailContent params={params} />
+      <BudgetDetailContent params={resolvedParams} />
     </AuthGuard>
   );
 }
@@ -35,8 +26,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 function BudgetDetailContent({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { toast } = useToast()
-  const [showApproveDialog, setShowApproveDialog] = useState(false)
-  const [showRejectDialog, setShowRejectDialog] = useState(false)
+
   const [budget, setBudget] = useState<Budget | null>(null)
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
@@ -159,7 +149,6 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         description: "Você será redirecionado para criar a ordem de serviço.",
       });
 
-      setShowApproveDialog(false);
       router.push(`/orders/new?budgetId=${id}`);
     } catch (error) {
       console.error("Error approving budget:", error);
@@ -183,7 +172,6 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         variant: "destructive",
       });
 
-      setShowRejectDialog(false);
       router.push("/budgets");
     } catch (error) {
       console.error("Error rejecting budget:", error);
@@ -426,11 +414,11 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
             </Link>
             {budget.status === "pending" && (
               <div className="flex gap-2 flex-1">
-                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowRejectDialog(true)}>
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={handleReject}>
                   <XCircle className="w-4 h-4 mr-2" />
                   Rejeitar
                 </Button>
-                <Button className="flex-1" onClick={() => setShowApproveDialog(true)}>
+                <Button className="flex-1" onClick={handleApprove}>
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Aprovar
                 </Button>
@@ -450,40 +438,6 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
           {/* Botão de download do PDF */}
           <BudgetPDFButton budget={budget} customer={customer} vehicle={vehicle} />
         </div>
-
-        {/* Approve Dialog */}
-        <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Aprovar Orçamento</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja aprovar este orçamento? Você será redirecionado para criar uma ordem de serviço.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleApprove}>Aprovar</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Reject Dialog */}
-        <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Rejeitar Orçamento</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja rejeitar este orçamento? Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleReject} className="bg-destructive text-destructive-foreground">
-                Rejeitar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </div>
     </>

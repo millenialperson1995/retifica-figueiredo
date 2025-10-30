@@ -14,6 +14,7 @@ import { AlertCircle, ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
 import type { ServiceItem, PartItem, StandardService, Customer, Vehicle, InventoryItem } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "../ui/spinner";
+import { useToast } from "@/hooks/use-toast";
 
 interface OrderFormProps {
   isEditing?: boolean;
@@ -45,8 +46,8 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
   
   // UI State
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false); // New state for read-only mode
+  const { toast } = useToast();
 
   // Fetch all required data from APIs on component mount
   useEffect(() => {
@@ -55,7 +56,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       if (!preselectedBudgetId) {
         setIsLoading(true);
       }
-      setError(null);
       try {
         const [customersRes, vehiclesRes, inventoryRes, servicesRes] = await Promise.all([
           fetch('/api/customers'),
@@ -79,7 +79,11 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
         setStandardServices(servicesData.filter((s: any) => s.isActive));
 
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        toast({
+          title: "Erro ao carregar dados iniciais",
+          description: err instanceof Error ? err.message : 'Ocorreu um erro desconhecido',
+          variant: "destructive",
+        });
       } finally {
         if (!preselectedBudgetId) {
           setIsLoading(false);
@@ -124,7 +128,11 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
           }
         } catch (error) {
           console.error("Failed to fetch order:", error);
-          setError("Falha ao carregar os dados da ordem de serviço.");
+          toast({
+            title: "Erro ao carregar ordem de serviço",
+            description: "Falha ao carregar os dados da ordem de serviço.",
+            variant: "destructive",
+          });
         } finally {
           setIsLoading(false);
         }
@@ -142,7 +150,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
     if (budgetId && budgetId !== "none" && !isEditing) { // Only load budget if not in edit mode
       const fetchBudget = async () => {
         setIsLoading(true);
-        setError(null);
         try {
           const response = await fetch(`/api/budgets/${budgetId}`);
           if (!response.ok) {
@@ -158,7 +165,11 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
           }
         } catch (error) {
           console.error("Failed to fetch budget:", error);
-          setError("Failed to load budget data.");
+          toast({
+            title: "Erro ao carregar orçamento",
+            description: "Falha ao carregar dados do orçamento.",
+            variant: "destructive",
+          });
           setBudgetId("none"); // Reset if budget is not found
         } finally {
             setIsLoading(false);
@@ -284,7 +295,11 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
     e.preventDefault();
     
     if (isReadOnly) {
-      setError("Não é possível editar uma ordem de serviço concluída.");
+      toast({
+        title: "Erro de permissão",
+        description: "Não é possível editar uma ordem de serviço concluída.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -325,12 +340,20 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
         throw new Error(errorData.error || (isEditing ? 'Failed to update order' : 'Failed to create order'));
       }
 
+      toast({
+        title: isEditing ? "Ordem de serviço atualizada" : "Ordem de serviço criada",
+        description: isEditing ? "A ordem de serviço foi atualizada com sucesso!" : "A ordem de serviço foi criada com sucesso!",
+      });
       router.push("/orders");
 
     } catch (error) {
       console.error("Submission error:", error);
       const errorMessage = error instanceof Error ? error.message : (isEditing ? 'Falha ao atualizar a ordem de serviço. Por favor, tente novamente.' : 'Falha ao criar a ordem de serviço. Por favor, tente novamente.');
-      setError(errorMessage);
+      toast({
+        title: isEditing ? "Erro ao atualizar a ordem de serviço" : "Erro ao criar a ordem de serviço",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -338,15 +361,6 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
     return (
         <div className="flex items-center justify-center h-screen">
             <Spinner className="w-10 h-10" />
-        </div>
-    );
-  }
-
-  if (error) {
-    return (
-        <div className="flex flex-col items-center justify-center h-screen text-red-500">
-            <p className="mb-4">{error}</p>
-            <Button onClick={() => router.back()}>Voltar</Button>
         </div>
     );
   }
