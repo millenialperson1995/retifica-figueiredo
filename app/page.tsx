@@ -195,7 +195,7 @@ function DashboardContent() {
 
           {/* Main Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+            <div className="bg-gradient-to-r from-[rgb(var(--brand-start))] to-[rgb(var(--brand-end))] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-80">Receita Mensal</p>
@@ -213,7 +213,7 @@ function DashboardContent() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-5 text-white">
+            <div className="bg-gradient-to-r from-[rgb(var(--brand-start))] to-[rgb(var(--brand-end))] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-80">OS em Andamento</p>
@@ -226,7 +226,7 @@ function DashboardContent() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl p-5 text-white">
+            <div className="bg-gradient-to-r from-[rgb(var(--brand-start))] to-[rgb(var(--brand-end))] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-80">Orçamentos Pendentes</p>
@@ -239,7 +239,7 @@ function DashboardContent() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-xl p-5 text-white">
+            <div className="bg-gradient-to-r from-[rgb(var(--brand-start))] to-[rgb(var(--brand-end))] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-80">Total de Clientes</p>
@@ -268,7 +268,7 @@ function DashboardContent() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div 
-                      className="bg-blue-500 h-2.5 rounded-full" 
+                      className="bg-[rgb(var(--brand-start))] h-2.5 rounded-full" 
                       style={{ width: `${orders.length > 0 ? (inProgressOrders / orders.length) * 100 : 0}%` }}
                     ></div>
                   </div>
@@ -280,7 +280,7 @@ function DashboardContent() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div 
-                      className="bg-emerald-500 h-2.5 rounded-full" 
+                      className="bg-[rgb(var(--brand-end))] h-2.5 rounded-full" 
                       style={{ width: `${orders.length > 0 ? (completedOrders / orders.length) * 100 : 0}%` }}
                     ></div>
                   </div>
@@ -292,7 +292,7 @@ function DashboardContent() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div 
-                      className="bg-amber-500 h-2.5 rounded-full" 
+                      className="bg-gray-400 h-2.5 rounded-full" 
                       style={{ width: `${budgets.length > 0 ? (pendingBudgets / budgets.length) * 100 : 0}%` }}
                     ></div>
                   </div>
@@ -320,7 +320,7 @@ function DashboardContent() {
                       cy="50"
                       r="45"
                       fill="none"
-                      stroke="#10b981"
+                      stroke="rgb(var(--brand-start))"
                       strokeWidth="10"
                       strokeDasharray={`${(approvedBudgets / totalBudgets) * 283 || 0} 283`}
                       strokeDashoffset="0"
@@ -332,7 +332,7 @@ function DashboardContent() {
                       cy="50"
                       r="45"
                       fill="none"
-                      stroke="#f59e0b"
+                      stroke="rgb(var(--brand-end))"
                       strokeWidth="10"
                       strokeDasharray={`${(pendingBudgets / totalBudgets) * 283 || 0} 283`}
                       strokeDashoffset={`${(approvedBudgets / totalBudgets) * 283 || 0}`}
@@ -344,7 +344,7 @@ function DashboardContent() {
                       cy="50"
                       r="45"
                       fill="none"
-                      stroke="#ef4444"
+                      stroke="#9ca3af"
                       strokeWidth="10"
                       strokeDasharray={`${(totalBudgets - approvedBudgets - pendingBudgets) / totalBudgets * 283 || 0} 283`}
                       strokeDashoffset={`${((approvedBudgets + pendingBudgets) / totalBudgets) * 283 || 0}`}
@@ -355,15 +355,15 @@ function DashboardContent() {
               </div>
               <div className="flex flex-wrap justify-center gap-4 mt-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-[rgb(var(--brand-start))] rounded-full"></div>
                   <span className="text-xs">Aprovados ({approvedBudgets})</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-[rgb(var(--brand-end))] rounded-full"></div>
                   <span className="text-xs">Pendentes ({pendingBudgets})</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
                   <span className="text-xs">Rejeitados ({totalBudgets - approvedBudgets - pendingBudgets})</span>
                 </div>
               </div>
@@ -378,8 +378,8 @@ function DashboardContent() {
               <Link href="/budgets/new" className="block">
                 <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow h-full">
                   <div className="flex items-start gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <Plus className="w-5 h-5 text-blue-600" />
+                    <div className="bg-[rgb(var(--brand-start))] bg-opacity-20 p-2 rounded-lg">
+                      <Plus className="w-5 h-5 text-[rgb(var(--brand-end))]" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground">Novo Orçamento</h3>
@@ -392,8 +392,8 @@ function DashboardContent() {
               <Link href="/orders/new" className="block">
                 <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow h-full">
                   <div className="flex items-start gap-3">
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Wrench className="w-5 h-5 text-emerald-600" />
+                    <div className="bg-[rgb(var(--brand-start))] bg-opacity-20 p-2 rounded-lg">
+                      <Wrench className="w-5 h-5 text-[rgb(var(--brand-end))]" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground">Nova Ordem de Serviço</h3>
@@ -406,8 +406,8 @@ function DashboardContent() {
               <Link href="/customers/new" className="block">
                 <div className="bg-white border border-border rounded-lg p-4 hover:shadow-md transition-shadow h-full">
                   <div className="flex items-start gap-3">
-                    <div className="bg-violet-100 p-2 rounded-lg">
-                      <Users className="w-5 h-5 text-violet-600" />
+                    <div className="bg-[rgb(var(--brand-start))] bg-opacity-20 p-2 rounded-lg">
+                      <Users className="w-5 h-5 text-[rgb(var(--brand-end))]" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground">Cadastrar Cliente</h3>
@@ -446,12 +446,12 @@ function DashboardContent() {
                           <div
                             className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
                               order.status === "completed"
-                                ? "bg-green-500"
+                                ? "bg-[rgb(var(--brand-start))]"
                                 : order.status === "in-progress"
-                                  ? "bg-blue-500"
+                                  ? "bg-[rgb(var(--brand-end))]"
                                   : order.status === "cancelled"
                                     ? "bg-red-500"
-                                    : "bg-yellow-500"
+                                    : "bg-gray-400"
                             }`}
                           />
                           <div className="flex-1 min-w-0">
@@ -512,7 +512,7 @@ function DashboardContent() {
                 </div>
                 <Link href="/budgets">
                   <Button variant="outline" size="sm">
-                    Ver todos
+                    Ver todas
                   </Button>
                 </Link>
               </div>
@@ -529,10 +529,10 @@ function DashboardContent() {
                           <div
                             className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
                               budget.status === "approved"
-                                ? "bg-green-500"
+                                ? "bg-[rgb(var(--brand-start))]"
                                 : budget.status === "rejected"
                                   ? "bg-red-500"
-                                  : "bg-yellow-500"
+                                  : "bg-gray-400"
                             }`}
                           />
                           <div className="flex-1 min-w-0">

@@ -4,6 +4,11 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Brand gradient (dark accents for a light theme) */
+  /* Brand gradient (dark accents for a light theme) - refined to deeper graphite */
+  --brand-start: 8 8 8; /* near black */
+  --brand-end: 60 60 60; /* dark graphite */
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -40,6 +45,11 @@
 }
 
 .dark {
+  /* In dark mode invert brand for better contrast */
+  /* In dark mode invert brand for better contrast */
+  --brand-start: 240 240 240;
+  --brand-end: 200 200 200;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -87,6 +97,10 @@
 
   --color-primary: 14 165 233; /* Sky blue - professional and trustworthy */
   --color-primary-foreground: 255 255 255;
+
+  /* Brand gradient used for buttons and accents (rgb components) */
+  --brand-start: 22 22 22;
+  --brand-end: 76 76 76;
 
   --color-secondary: 100 116 139; /* Slate gray */
   --color-secondary-foreground: 255 255 255;
