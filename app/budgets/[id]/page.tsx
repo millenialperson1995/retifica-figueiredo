@@ -417,11 +417,13 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         {/* Actions */}
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <Link href={`/budgets/${id}/edit`}>
-              <Button variant="outline" className="flex-1">
-                Editar
-              </Button>
-            </Link>
+            {(budget.status === "pending" || !existingOrder) && (
+              <Link href={`/budgets/${id}/edit`}>
+                <Button variant="outline" className="flex-1">
+                  Editar
+                </Button>
+              </Link>
+            )}
             {budget.status === "pending" && (
               <div className="flex gap-2 flex-1">
                 <Button variant="outline" className="flex-1 bg-transparent" onClick={handleReject}>
