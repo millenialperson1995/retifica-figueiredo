@@ -129,8 +129,9 @@ export async function GET(req: NextRequest) {
      *                     description: Mechanic notes
      */
 
-    // Filter orders by authenticated user ID
-    const orders = await OrderModel.find({ userId: auth.userId });
+  // Filter orders by authenticated user ID and sort by createdAt (newest first).
+  // Keep startDate as a secondary sort key so orders without createdAt still have a deterministic order.
+  const orders = await OrderModel.find({ userId: auth.userId }).sort({ createdAt: -1, startDate: -1 });
     return new Response(JSON.stringify(orders), {
       status: 200,
       headers: {

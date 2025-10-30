@@ -98,12 +98,23 @@ export function getOrders(): Order[] {
   if (!data) return []
   const orders = JSON.parse(data)
   // Convert date strings back to Date objects
-  return orders.map((o: any) => ({
+  const parsed = orders.map((o: any) => ({
     ...o,
-    startDate: new Date(o.startDate),
-    estimatedEndDate: new Date(o.estimatedEndDate),
-    completedDate: o.completedDate ? new Date(o.completedDate) : undefined,
+    startDate: o.startDate ? new Date(o.startDate) : undefined,
+    estimatedEndDate: o.estimatedEndDate ? new Date(o.estimatedEndDate) : undefined,
+    // some records may use different field names (completedDate / actualEndDate)
+    actualEndDate: o.actualEndDate ? new Date(o.actualEndDate) : (o.completedDate ? new Date(o.completedDate) : undefined),
+    createdAt: o.createdAt ? new Date(o.createdAt) : undefined,
+    updatedAt: o.updatedAt ? new Date(o.updatedAt) : undefined,
   }))
+
+  // Return newest orders first (createdAt desc). If createdAt missing, keep original order.
+  return parsed.sort((a: any, b: any) => {
+    if (a.createdAt && b.createdAt) return b.createdAt.getTime() - a.createdAt.getTime()
+    if (a.createdAt && !b.createdAt) return -1
+    if (!a.createdAt && b.createdAt) return 1
+    return 0
+  })
 }
 
 export function saveOrder(order: Order) {
@@ -112,7 +123,9 @@ export function saveOrder(order: Order) {
   if (index >= 0) {
     orders[index] = order
   } else {
-    orders.push(order)
+    // Insert new orders at the beginning so they appear first in lists that don't sort
+    // (getOrders also enforces sorting by createdAt).
+    orders.unshift(order)
   }
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders))
 }

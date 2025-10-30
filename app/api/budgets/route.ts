@@ -121,8 +121,8 @@ export async function GET(req: NextRequest) {
      *                     description: Additional notes
      */
 
-    // Filter budgets by authenticated user ID
-    const budgets = await BudgetModel.find({ userId: auth.userId });
+    // Filter budgets by authenticated user ID and sort by date in descending order
+    const budgets = await BudgetModel.find({ userId: auth.userId }).sort({ date: -1 });
     return new Response(JSON.stringify(budgets), {
       status: 200,
       headers: {
