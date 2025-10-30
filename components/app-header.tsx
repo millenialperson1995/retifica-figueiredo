@@ -9,7 +9,6 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
-import { ThemeToggle } from "@/components/theme-toggle"
 
 export function AppHeader() {
   return (
@@ -28,7 +27,6 @@ export function AppHeader() {
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
-          <ThemeToggle />
         </div>
       </div>
     </header>
