@@ -360,10 +360,28 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating budget:', error);
-    return new Response(JSON.stringify({ error: 'Error creating budget' }), {
-      status: 500,
+    
+    // Tratamento detalhado de erros
+    let errorMessage = 'Erro ao criar orçamento';
+    let statusCode = 500;
+
+    if (error.name === 'ValidationError') {
+      // Erro de validação do Mongoose
+      statusCode = 400;
+      const validationErrors = Object.values(error.errors).map((err: any) => err.message);
+      errorMessage = `Erro de validação: ${validationErrors.join(', ')}`;
+    } else if (error.code === 11000) {
+      // Erro de duplicidade
+      statusCode = 409;
+      errorMessage = 'Já existe um orçamento com essas informações';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: statusCode,
       headers: {
         'Content-Type': 'application/json',
       },

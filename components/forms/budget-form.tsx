@@ -13,7 +13,6 @@ import { PageHeader } from "@/components/page-header";
 import { ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
 import type { ServiceItem, PartItem, Budget, InventoryItem, StandardService } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/lib/api";
 
 interface BudgetFormProps {
@@ -24,7 +23,6 @@ interface BudgetFormProps {
 export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   const [customerId, setCustomerId] = useState(budget?.customerId || searchParams.get('customerId') || "");
   const [vehicleId, setVehicleId] = useState(budget?.vehicleId || "");
@@ -69,11 +67,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
         setStandardServices((servicesData || []).filter((s: any) => s.isActive));
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        toast({
-          title: "Erro ao carregar dados",
-          description: "Não foi possível carregar os clientes, veículos, inventário ou serviços",
-          variant: "destructive",
-        });
+        alert("Erro ao carregar dados: Não foi possível carregar os clientes, veículos, inventário ou serviços");
       }
     };
 
@@ -170,24 +164,44 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
 
   const subtotal = [...services, ...parts].reduce((sum, item) => sum + item.total, 0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleError = async (error: any) => {
+    let message = `Erro ao salvar orçamento`;
+    
+    if (error instanceof Response) {
+      try {
+        const data = await error.json();
+        if (data?.error) {
+          message = data.error;
+        }
+      } catch {
+        message = `Erro: ${error.statusText}`;
+      }
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      message = error.error || error.message || message;
+    }
+
+    console.error('Detalhes do erro:', {
+      type: error?.constructor?.name,
+      status: error instanceof Response ? error.status : undefined,
+      message,
+      error
+    });
+
+    alert(message);
+};
+
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!customerId || !vehicleId) {
-      toast({
-        title: "Erro de validação",
-        description: "Selecione um cliente e um veículo",
-        variant: "destructive",
-      });
+      alert("Erro de validação: Selecione um cliente e um veículo");
       return;
     }
 
     if (services.length === 0 || services.every((s) => !s.description.trim())) {
-      toast({
-        title: "Erro de validação",
-        description: "Adicione pelo menos um serviço",
-        variant: "destructive",
-      });
+      alert("Erro de validação: Adicione pelo menos um serviço");
       return;
     }
 
@@ -215,42 +229,10 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
         await apiService.createBudget(newBudget);
       }
 
-      toast({
-        title: isEditing ? "Orçamento atualizado!" : "Orçamento criado!",
-        description: `Orçamento #${newBudget.id} foi ${isEditing ? 'atualizado' : 'criado'} com sucesso`,
-      });
-
+      alert(isEditing ? "Orçamento atualizado com sucesso!" : "Orçamento criado com sucesso!");
       router.push("/budgets");
     } catch (error) {
-      console.error('Erro ao salvar orçamento:', error);
-
-      // Try to extract a useful message from the thrown error (apiService attaches responseText)
-      let message = `Não foi possível ${isEditing ? 'atualizar' : 'criar'} o orçamento`;
-      try {
-        const errAny = error as any;
-        if (errAny?.responseText) {
-          // responseText might be a JSON string like { error: '...' }
-          try {
-            const parsed = JSON.parse(errAny.responseText);
-            if (parsed?.error) message = parsed.error;
-          } catch (e) {
-            // not JSON, use raw text
-            if (typeof errAny.responseText === 'string' && errAny.responseText.trim()) {
-              message = errAny.responseText;
-            }
-          }
-        } else if (errAny?.message) {
-          message = errAny.message;
-        }
-      } catch (e) {
-        // fallback to generic message
-      }
-
-      toast({
-        title: "Erro ao salvar",
-        description: message,
-        variant: "destructive",
-      });
+      await handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -281,7 +263,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="customer">Cliente *</Label>
                 <Select value={customerId} onValueChange={setCustomerId} required>
-                  <SelectTrigger>
+                  <SelectTrigger id="customer">
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent>
@@ -298,7 +280,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
                 <div className="space-y-2">
                   <Label htmlFor="vehicle">Veículo *</Label>
                   <Select value={vehicleId} onValueChange={setVehicleId} required>
-                    <SelectTrigger>
+                    <SelectTrigger id="vehicle">
                       <SelectValue placeholder="Selecione um veículo" />
                     </SelectTrigger>
                     <SelectContent>

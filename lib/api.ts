@@ -29,12 +29,47 @@ class ApiService {
     }
 
     if (!response.ok) {
-      // Retornar informações específicas para tratamento de erros
-      const errorText = await response.text();
-      const error = new Error(`Erro na API: ${response.status} - ${response.statusText}`);
-      (error as any).status = response.status;
-      (error as any).responseText = errorText;
-      throw error;
+      // Log detalhado do erro para debug
+      console.error(`API error ${response.status} ${response.statusText} at ${endpoint}`);
+      
+      try {
+        // Tenta parsear o corpo da resposta como JSON
+        const errorBody = await response.json();
+        console.error('API Error Details:', errorBody);
+
+        // Se tiver uma mensagem de erro específica, retorna ela
+        if (errorBody?.error) {
+          throw new Error(errorBody.error);
+        }
+      } catch (e) {
+        // Se não conseguir parsear como JSON, usa a mensagem padrão
+        let message = 'Erro na operação';
+        
+        switch (response.status) {
+          case 400:
+            message = 'Dados inválidos. Verifique as informações e tente novamente.';
+            break;
+          case 401:
+            message = 'Não autorizado. Faça login novamente.';
+            break;
+          case 403:
+            message = 'Você não tem permissão para realizar esta operação.';
+            break;
+          case 404:
+            message = 'O recurso solicitado não foi encontrado.';
+            break;
+          case 409:
+            message = 'Conflito de dados. O recurso já existe.';
+            break;
+          case 500:
+            message = 'Erro interno do servidor. Tente novamente mais tarde.';
+            break;
+          default:
+            message = 'Erro ao realizar operação. Tente novamente.';
+        }
+        
+        throw new Error(message);
+      }
     }
 
     return response.json();

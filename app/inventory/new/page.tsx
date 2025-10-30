@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { apiService } from "@/lib/api";
 
@@ -77,7 +76,7 @@ function NewInventoryContent() {
       const created = await apiService.createInventoryItem(payload);
 
       form.reset();
-      toast.success("Item adicionado ao estoque com sucesso!");
+      alert("Item adicionado ao estoque com sucesso!");
       // Redirect to the created item's detail page if available
       if (created?.id) {
         router.push(`/inventory/${created.id}`);
@@ -86,7 +85,7 @@ function NewInventoryContent() {
       }
     } catch (err: any) {
       console.error('Erro ao criar item de inventário:', err);
-      toast.error(err?.message || 'Erro ao criar item');
+      alert(err?.message || 'Erro ao criar item');
     } finally {
       setIsSubmitting(false);
     }

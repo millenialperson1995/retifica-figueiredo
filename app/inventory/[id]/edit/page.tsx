@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { apiService } from "@/lib/api";
 
@@ -117,11 +116,11 @@ function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
 
       const updated = await apiService.updateInventoryItem(params.id, payload);
       setIsSubmitting(false);
-      toast.success("Item atualizado com sucesso!");
+      alert("Item atualizado com sucesso!");
       router.push(`/inventory/${params.id}`);
     } catch (err: any) {
       console.error('Erro ao atualizar item de inventário:', err);
-      toast.error(err?.message || 'Erro ao atualizar item');
+      alert(err?.message || 'Erro ao atualizar item');
       setIsSubmitting(false);
     }
   }
