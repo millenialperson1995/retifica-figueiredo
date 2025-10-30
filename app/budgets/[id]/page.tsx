@@ -22,7 +22,7 @@ import AuthGuard from "@/components/auth-guard"
 import { apiService } from "@/lib/api"
 import { AppHeader } from "@/components/app-header"
 import { Budget, Customer, Vehicle } from "@/lib/types"
-import { useBudgetPDF } from "@/components/pdf/useBudgetPDF.tsx";
+import { useBudgetPDF } from "@/components/pdf/useBudgetPDF";
 
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   return (
@@ -42,7 +42,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const { id } = React.use(params);
+  const { id } = params;
 
   // Componente para o botão de download do PDF
   const BudgetPDFButton = ({ budget, customer, vehicle }: { budget: Budget, customer: Customer | null, vehicle: Vehicle | null }) => {

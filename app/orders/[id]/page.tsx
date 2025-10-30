@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, User, Car, Calendar, Clock, FileText, CheckCircle, XCircle, PlayCircle, AlertCircle, Loader2, Download } from "lucide-react"
 import { apiService } from "@/lib/api"
+import { Order, Customer, Vehicle } from '@/lib/types'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,55 +26,13 @@ import { toast } from "@/components/ui/use-toast"
 import { useOrderPDF } from "@/components/pdf/useOrderPDF";
 
 // Interfaces to match data structure (should match types in lib/types.ts)
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  cpfCnpj: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  referencia?: string; // Ponto de referência opcional
-  userId: string;
-  createdAt: Date;
-}
-
-interface Vehicle {
-  id: string;
-  customerId: string;
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  engine: string; // Motor do veículo
-  cylinder: string; // Cilindro do veículo
-  chassisNumber: string; // Número do chassi
-  userId: string;
-}
-
-interface Order {
-  id: string;
-  customerId: string;
-  vehicleId: string;
-  startDate: string;
-  estimatedEndDate: string;
-  actualEndDate?: string;
-  status: "pending" | "in-progress" | "completed" | "cancelled";
-  userId: string;
-  services: { id: string; description: string; quantity: number; unitPrice: number; total: number }[];
-  parts: { id: string; description: string; partNumber?: string; quantity: number; unitPrice: number; total: number }[];
-  total: number;
-  notes?: string;
-  mechanicNotes?: string;
-}
+// Use shared types
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const resolvedParams = React.use(params)
+  const { id } = params;
   return (
     <AuthGuard>
-      <OrderDetailContent id={resolvedParams.id} />
+      <OrderDetailContent id={id} />
     </AuthGuard>
   )
 }
@@ -97,7 +56,13 @@ function OrderDetailContent({ id }: { id: string }) {
     const fetchData = async () => {
       try {
         const orderData = await apiService.getOrderById(id)
-        setOrder(orderData)
+        // Convert date strings from API to Date objects
+        if (orderData) {
+          orderData.startDate = orderData.startDate ? new Date(orderData.startDate) : undefined
+          orderData.estimatedEndDate = orderData.estimatedEndDate ? new Date(orderData.estimatedEndDate) : undefined
+          orderData.actualEndDate = orderData.actualEndDate ? new Date(orderData.actualEndDate) : undefined
+        }
+        setOrder(orderData as unknown as Order)
 
         const [customerData, vehicleData] = await Promise.all([
           apiService.getCustomerById(orderData.customerId),

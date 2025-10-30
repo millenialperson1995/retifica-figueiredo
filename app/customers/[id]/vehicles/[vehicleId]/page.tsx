@@ -23,13 +23,32 @@ function VehicleDetailContent() {
   const params = useParams<{ id: string, vehicleId: string }>();
   const [vehicle, setVehicle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [vehicleBudgets, setVehicleBudgets] = useState<any[]>([]);
+  const [vehicleOrders, setVehicleOrders] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
         if (params.vehicleId) {
-          const data = await apiService.getVehicleById(params.vehicleId);
-          setVehicle(data);
+          const [vehicleData, budgetsData, ordersData] = await Promise.all([
+            apiService.getVehicleById(params.vehicleId),
+            apiService.getBudgets(),
+            apiService.getOrders(),
+          ]);
+
+          setVehicle(vehicleData);
+
+          // Convert dates in budgets
+          const budgets = (budgetsData || []).map((b: any) => ({ ...b, date: b.date ? new Date(b.date) : undefined }));
+          const orders = (ordersData || []).map((o: any) => ({
+            ...o,
+            startDate: o.startDate ? new Date(o.startDate) : undefined,
+            estimatedEndDate: o.estimatedEndDate ? new Date(o.estimatedEndDate) : undefined,
+            completedDate: o.completedDate ? new Date(o.completedDate) : undefined,
+          }));
+
+          setVehicleBudgets(budgets.filter((b: any) => b.vehicleId === params.vehicleId));
+          setVehicleOrders(orders.filter((o: any) => o.vehicleId === params.vehicleId));
         }
       } catch (error) {
         console.error("Error fetching vehicle:", error);
@@ -54,10 +73,7 @@ function VehicleDetailContent() {
     notFound();
   }
 
-  // For now using mock data for budgets and orders until those APIs are enhanced
-  const { mockBudgets, mockOrders } = require("@/lib/mock-data");
-  const vehicleBudgets = mockBudgets.filter((b) => b.vehicleId === params.vehicleId)
-  const vehicleOrders = mockOrders.filter((o) => o.vehicleId === params.vehicleId)
+  // budgets and orders are loaded via API into state: vehicleBudgets and vehicleOrders
 
   return (
     <div className="min-h-screen pb-20">

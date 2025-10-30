@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { apiService } from "@/lib/api";
 
 // Define the form schema
 const inventoryItemSchema = z.object({
@@ -59,20 +60,36 @@ function NewInventoryContent() {
 
   async function onSubmit(values: z.infer<typeof inventoryItemSchema>) {
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Reset form
-    form.reset();
-    
-    setIsSubmitting(false);
-    
-    // Show success message
-    toast.success("Item adicionado ao estoque com sucesso!");
-    
-    // Redirect to inventory list
-    router.push("/inventory");
+    try {
+      // transform fields to proper types
+      const payload = {
+        name: values.name,
+        description: values.description,
+        category: values.category,
+        sku: values.sku,
+        quantity: Number(values.quantity),
+        minQuantity: Number(values.minQuantity),
+        unitPrice: Number(values.unitPrice),
+        supplier: values.supplier || undefined,
+        notes: values.notes || undefined,
+      };
+
+      const created = await apiService.createInventoryItem(payload);
+
+      form.reset();
+      toast.success("Item adicionado ao estoque com sucesso!");
+      // Redirect to the created item's detail page if available
+      if (created?.id) {
+        router.push(`/inventory/${created.id}`);
+      } else {
+        router.push("/inventory");
+      }
+    } catch (err: any) {
+      console.error('Erro ao criar item de inventário:', err);
+      toast.error(err?.message || 'Erro ao criar item');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

@@ -12,14 +12,8 @@ const STORAGE_KEYS = {
 export function initializeStorage() {
   if (typeof window === "undefined") return
 
-  // Only initialize if storage is empty
-  if (!localStorage.getItem(STORAGE_KEYS.CUSTOMERS)) {
-    const { mockCustomers, mockVehicles, mockBudgets, mockOrders } = require("./mock-data")
-    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(mockCustomers))
-    localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(mockVehicles))
-    localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(mockBudgets))
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(mockOrders))
-  }
+  // Intentionally do not seed localStorage with static/mock data.
+  // The app should fetch data from the server via the API or persist user data explicitly.
 }
 
 // Customers

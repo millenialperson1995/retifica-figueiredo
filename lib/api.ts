@@ -103,6 +103,10 @@ class ApiService {
     return this.request('/inventory');
   }
 
+  async getInventoryItem(id: string): Promise<any> {
+    return this.request(`/inventory/${id}`);
+  }
+
   async createInventoryItem(itemData: any): Promise<any> {
     return this.request('/inventory', {
       method: 'POST',

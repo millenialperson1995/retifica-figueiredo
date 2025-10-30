@@ -5,7 +5,8 @@ import AuthGuard from "@/components/auth-guard";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function EditBudgetPage({ params }: { params: Promise<{ id: string }> }) {
-  const { userId } = auth();
+  const session = await auth();
+  const userId = session?.userId;
   if (!userId) {
     return (
       <div className="min-h-screen flex items-center justify-center">

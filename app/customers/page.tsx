@@ -92,7 +92,7 @@ function CustomersContent() {
               {customers.map((customer) => {
                 // Note: Para uma implementação completa, você buscaria os veículos associados
                 // Por enquanto, usaremos um placeholder
-                const vehicleCount = 0; // Este valor viria de uma chamada à API de veículos
+                const vehicleCount: number = 0; // Este valor viria de uma chamada à API de veículos
                 return (
                   <Link key={customer.id} href={`/customers/${customer.id}`}>
                     <Card className="hover:bg-accent/50 transition-colors">

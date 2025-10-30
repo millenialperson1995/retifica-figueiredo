@@ -163,7 +163,7 @@ function InventoryContent() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredInventory.map(item => (
-                    <Link key={item._id} href={`/inventory/${item._id}`}>
+                    <Link key={item.id} href={`/inventory/${item.id}`}>
                       <Card className="hover:shadow-md transition-shadow cursor-pointer border-border hover:border-primary/30">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-2">

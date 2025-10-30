@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { getInventoryById } from "@/lib/mock-data";
+import { apiService } from "@/lib/api";
 
 // Define the form schema
 const inventoryItemSchema = z.object({
@@ -48,41 +48,82 @@ export default function InventoryItemEditPage({ params }: InventoryItemEditPageP
 function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const item = getInventoryById(params.id);
-
-  if (!item) {
-    // Handle case where item is not found
-    return <div>Item não encontrado</div>;
-  }
+  const [item, setItem] = useState<any | null>(null);
 
   const form = useForm<z.infer<typeof inventoryItemSchema>>({
     resolver: zodResolver(inventoryItemSchema),
     defaultValues: {
-      name: item.name,
-      description: item.description,
-      category: item.category,
-      sku: item.sku,
-      quantity: item.quantity.toString(),
-      minQuantity: item.minQuantity.toString(),
-      unitPrice: item.unitPrice.toString(),
-      supplier: item.supplier || "",
-      notes: item.notes || "",
+      name: "",
+      description: "",
+      category: "",
+      sku: "",
+      quantity: "0",
+      minQuantity: "0",
+      unitPrice: "0",
+      supplier: "",
+      notes: "",
     },
   });
 
+  // Load item data from API and populate form
+  useEffect(() => {
+    const loadItem = async () => {
+      try {
+        const data = await apiService.getInventoryItem(params.id);
+        // convert to client-friendly values
+        setItem(data);
+        form.reset({
+          name: data.name || "",
+          description: data.description || "",
+          category: data.category || "",
+          sku: data.sku || "",
+          quantity: (data.quantity ?? 0).toString(),
+          minQuantity: (data.minQuantity ?? 0).toString(),
+          unitPrice: (data.unitPrice ?? 0).toString(),
+          supplier: data.supplier || "",
+          notes: data.notes || "",
+        });
+      } catch (err) {
+        console.error('Erro ao carregar item de inventário:', err);
+      }
+    };
+
+    loadItem();
+  }, [params.id]);
+
+  if (item === null) {
+    // loading state until API returns
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando item...</p>
+      </div>
+    );
+  }
+
   async function onSubmit(values: z.infer<typeof inventoryItemSchema>) {
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setIsSubmitting(false);
-    
-    // Show success message
-    toast.success("Item atualizado com sucesso!");
-    
-    // Redirect to inventory detail page
-    router.push(`/inventory/${params.id}`);
+    try {
+      const payload = {
+        name: values.name,
+        description: values.description,
+        category: values.category,
+        sku: values.sku,
+        quantity: Number(values.quantity),
+        minQuantity: Number(values.minQuantity),
+        unitPrice: Number(values.unitPrice),
+        supplier: values.supplier || undefined,
+        notes: values.notes || undefined,
+      };
+
+      const updated = await apiService.updateInventoryItem(params.id, payload);
+      setIsSubmitting(false);
+      toast.success("Item atualizado com sucesso!");
+      router.push(`/inventory/${params.id}`);
+    } catch (err: any) {
+      console.error('Erro ao atualizar item de inventário:', err);
+      toast.error(err?.message || 'Erro ao atualizar item');
+      setIsSubmitting(false);
+    }
   }
 
   return (

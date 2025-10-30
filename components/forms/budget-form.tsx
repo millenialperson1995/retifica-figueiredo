@@ -14,7 +14,6 @@ import { ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
 import type { ServiceItem, PartItem, Budget, InventoryItem, StandardService } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { mockInventory, getActiveStandardServices } from "@/lib/mock-data";
 import { apiService } from "@/lib/api";
 
 interface BudgetFormProps {
@@ -36,7 +35,8 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [allVehicles, setAllVehicles] = useState<any[]>([]);
-  const standardServices = getActiveStandardServices();
+  const [standardServices, setStandardServices] = useState<StandardService[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
   const vehicles = customerId ? allVehicles.filter((v) => v.customerId === customerId) : [];
 
@@ -54,18 +54,24 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Carregar clientes e veículos
-        const [customersData, vehiclesData] = await Promise.all([
+        // Carregar clientes, veículos, inventário e serviços padrão
+        const [customersData, vehiclesData, inventoryData, servicesData] = await Promise.all([
           apiService.getCustomers(),
           apiService.getVehicles(),
+          apiService.getInventory(),
+          apiService.getServices(),
         ]);
-        setCustomers(customersData);
-        setAllVehicles(vehiclesData);
+
+        setCustomers(customersData || []);
+        setAllVehicles(vehiclesData || []);
+        setInventory(inventoryData || []);
+        // Some services may include inactive ones; keep only active ones
+        setStandardServices((servicesData || []).filter((s: any) => s.isActive));
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         toast({
           title: "Erro ao carregar dados",
-          description: "Não foi possível carregar os clientes e veículos",
+          description: "Não foi possível carregar os clientes, veículos, inventário ou serviços",
           variant: "destructive",
         });
       }
@@ -141,7 +147,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
   };
 
   const updatePartWithInventory = (id: string, inventoryId: string) => {
-    const inventoryItem = mockInventory.find(item => item.id === inventoryId);
+    const inventoryItem = inventory.find(item => item.id === inventoryId);
     if (inventoryItem) {
       setParts(
         parts.map((p) => {
@@ -188,7 +194,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
     setIsLoading(true);
 
     try {
-      const newBudget: Budget = {
+      const newBudget = {
         id: budget?.id || `BDG${Date.now()}`,
         customerId,
         vehicleId,
@@ -200,7 +206,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
         subtotal,
         discount: budget?.discount || 0,
         total: subtotal - (budget?.discount || 0),
-      };
+      } as any;
 
       // Salvar o orçamento
       if (isEditing) {
@@ -216,9 +222,33 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
 
       router.push("/budgets");
     } catch (error) {
+      console.error('Erro ao salvar orçamento:', error);
+
+      // Try to extract a useful message from the thrown error (apiService attaches responseText)
+      let message = `Não foi possível ${isEditing ? 'atualizar' : 'criar'} o orçamento`;
+      try {
+        const errAny = error as any;
+        if (errAny?.responseText) {
+          // responseText might be a JSON string like { error: '...' }
+          try {
+            const parsed = JSON.parse(errAny.responseText);
+            if (parsed?.error) message = parsed.error;
+          } catch (e) {
+            // not JSON, use raw text
+            if (typeof errAny.responseText === 'string' && errAny.responseText.trim()) {
+              message = errAny.responseText;
+            }
+          }
+        } else if (errAny?.message) {
+          message = errAny.message;
+        }
+      } catch (e) {
+        // fallback to generic message
+      }
+
       toast({
         title: "Erro ao salvar",
-        description: `Não foi possível ${isEditing ? 'atualizar' : 'criar'} o orçamento`,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -432,7 +462,7 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
                           <SelectValue placeholder="Selecione uma peça do estoque" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockInventory.map((item) => (
+                          {inventory.map((item) => (
                             <SelectItem key={item.id} value={item.id}>
                               {item.name} (R$ {item.unitPrice.toFixed(2)}) - Estoque: {item.quantity}
                             </SelectItem>

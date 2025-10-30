@@ -159,7 +159,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Open Sans',
   },
   table: {
-    display: 'table',
+    // 'table' is not in the TypeScript union for Display; cast to any to keep intended PDF layout
+    display: 'table' as any,
     width: 'auto',
     marginBottom: 20,
   },

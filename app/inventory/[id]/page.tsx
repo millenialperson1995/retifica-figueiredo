@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { FileText, Package, AlertCircle, DollarSign } from "lucide-react";
-import { getInventoryById } from "@/lib/mock-data";
+import { connectToDatabase } from "@/lib/mongodb";
+import { InventoryItemModel } from "@/lib/models/InventoryItem";
 import Link from "next/link";
+import InventoryActions from "@/components/inventory/InventoryActions";
 import { auth } from "@clerk/nextjs/server";
 
 interface InventoryItemPageProps {
@@ -16,14 +18,16 @@ interface InventoryItemPageProps {
 }
 
 export default async function InventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
-  const { userId } = auth();
+  const session = await auth();
+  const userId = session?.userId;
   if (!userId) {
     redirect('/sign-in');
   }
 
   const resolvedParams = await params;
   const { id } = resolvedParams;
-  const item = getInventoryById(id);
+  await connectToDatabase();
+  const item = await InventoryItemModel.findOne({ _id: id, userId: userId });
 
   if (!item) {
     notFound();
@@ -39,18 +43,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             description={`Detalhes do item de estoque - SKU: ${item.sku}`}
           />
 
-          <div className="flex gap-3">
-            <Link href="/inventory">
-              <Button variant="outline">
-                Voltar para Estoque
-              </Button>
-            </Link>
-            <Link href={`/inventory/${id}/edit`}>
-              <Button>
-                Editar Item
-              </Button>
-            </Link>
-          </div>
+          <InventoryActions id={id} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Main Info Card */}
