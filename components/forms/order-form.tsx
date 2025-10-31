@@ -403,7 +403,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
               <CardTitle className="text-base">Cliente e Veículo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
+              <div key="customer-selector" className="space-y-2">
                 <Label htmlFor="customer">Cliente *</Label>
                 <Select
                   value={customerId}
@@ -433,7 +433,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
               </div>
 
               {customerId && (
-                <div className="space-y-2">
+                <div key="vehicle-selector" className="space-y-2">
                   <Label htmlFor="vehicle">Veículo *</Label>
                   <Select 
                     value={vehicleId} 
@@ -716,7 +716,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
           {/* Notes */}
           <Card>
             <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
+              <div key="notes-field" className="space-y-2">
                 <Label htmlFor="notes">Observações</Label>
                 <Textarea
                   id="notes"
@@ -730,7 +730,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   disabled={isReadOnly}
                 />
               </div>
-              <div className="space-y-2">
+              <div key="mechanic-notes-field" className="space-y-2">
                 <Label htmlFor="mechanicNotes">Anotações do Mecânico</Label>
                 <Textarea
                   id="mechanicNotes"
@@ -744,7 +744,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
                   disabled={isReadOnly}
                 />
               </div>
-              <div className="pt-4 border-t border-border">
+              <div key="total-display" className="pt-4 border-t border-border">
                 <div className="flex items-center justify-between text-lg font-bold">
                   <span>Total</span>
                   <span>{total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>

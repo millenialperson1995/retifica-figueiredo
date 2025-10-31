@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    padding: 30,
+    padding: 20,
   },
   section: {
     margin: 10,
@@ -100,68 +100,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   companyInfo: {
     flex: 1,
-    marginRight: 20,
+    marginRight: 15,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     textAlign: 'center',
-    marginBottom: 10, 
+    marginBottom: 8, 
     fontFamily: 'Open Sans',
     fontWeight: 'bold',
   },
   statusMessage: {
     textAlign: 'center',
-    fontSize: 10,
+    fontSize: 9,
     color: 'grey',
-    marginBottom: 10,
+    marginBottom: 8,
     fontFamily: 'Open Sans',
   },
   statusHighlight: {
     fontWeight: 'bold',
   },
   companyDetails: {
-    fontSize: 10,
-    marginBottom: 5,
+    fontSize: 9,
+    marginBottom: 3,
     fontFamily: 'Open Sans',
   },
   detailsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   detailBox: {
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#000',
-    padding: 10,
+    padding: 6,
     flex: 1,
   },
   detailTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 4,
     textAlign: 'center',
     fontFamily: 'Open Sans',
   },
   detailText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Open Sans',
   },
   table: {
     // 'table' is not in the TypeScript union for Display; cast to any to keep intended PDF layout
     display: 'table' as any,
     width: 'auto',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   tableRow: {
     flexDirection: 'row',
@@ -169,86 +169,69 @@ const styles = StyleSheet.create({
   tableColHeader: {
     width: '25%',
     borderStyle: 'solid',
-    borderWidth: 1,
+    borderWidth: 0.5,
     backgroundColor: '#f0f0f0',
     borderColor: 'black',
-    padding: 8,
+    padding: 4,
   },
   tableCol: {
     width: '25%',
     borderStyle: 'solid',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: 'black',
-    padding: 8,
+    padding: 4,
   },
   tableCellHeader: {
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: 'bold',
     textAlign: 'center',
     fontFamily: 'Open Sans',
   },
   tableCell: {
-    fontSize: 10,
+    fontSize: 8,
     textAlign: 'center',
     fontFamily: 'Open Sans',
   },
   tableCellLeft: {
-    fontSize: 10,
+    fontSize: 8,
     textAlign: 'left',
     fontFamily: 'Open Sans',
   },
   totalSection: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   totalBox: {
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#000',
-    padding: 10,
-    width: 150,
+    padding: 6,
+    width: 130,
   },
   totalText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Open Sans',
   },
-  signaturesSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 40,
-  },
-  signatureBox: {
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
-    width: '45%',
-  },
-  signatureLine: {
-    height: 40,
-    marginTop: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#000',
-  },
   notesSection: {
-    marginTop: 20,
+    marginTop: 15,
   },
   notesText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Open Sans',
   },
   serviceItemDescription: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'Open Sans',
-    marginTop: 5,
+    marginTop: 3,
     textAlign: 'left',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   partItemDescription: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'Open Sans',
-    marginTop: 5,
+    marginTop: 3,
     textAlign: 'left',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
 });
 
@@ -306,7 +289,7 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
             {customer.referencia && <Text style={styles.detailText}>Ponto de Referência: {customer.referencia}</Text>}
           </View>
 
-          <View style={{ width: 20 }} />
+          <View style={{ width: 10 }} />
 
           <View style={styles.detailBox}>
             <Text style={styles.detailTitle}>DADOS DO VEÍCULO</Text>
@@ -321,92 +304,129 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
         </View>
 
         {/* Data do orçamento */}
-        <View style={{ alignItems: 'flex-end', marginBottom: 20 }}>
+        <View style={{ alignItems: 'flex-end', marginBottom: 10 }}>
           <Text style={styles.detailText}>Data do Orçamento: {formatDate(budget.date)}</Text>
         </View>
 
-        {/* Tabela de serviços */}
-        {budget.services && budget.services.length > 0 && (
-          <>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, fontFamily: 'Open Sans' }}>
-              SERVIÇOS
-            </Text>
-            <View style={styles.table}>
-              <View style={styles.tableRow}>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>DESCRIÇÃO</Text>
+        {/* Tabelas de serviços e peças lado a lado para melhor aproveitamento de espaço */}
+        {budget.services && budget.services.length > 0 && budget.parts && budget.parts.length > 0 ? (
+          // Se houver serviços e peças, exibir em colunas lado a lado
+          <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+            <View style={{ flex: 1, marginRight: 5 }}>
+              <Text style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 5, fontFamily: 'Open Sans' }}>
+                SERVIÇOS
+              </Text>
+              <View style={[styles.table, { marginBottom: 0 }]}>
+                <View style={styles.tableRow}>
+                  <View style={[styles.tableColHeader, { width: '60%' }]}>
+                    <Text style={styles.tableCellHeader}>DESCRIÇÃO</Text>
+                  </View>
+                  <View style={[styles.tableColHeader, { width: '40%' }]}>
+                    <Text style={styles.tableCellHeader}>TOTAL</Text>
+                  </View>
                 </View>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>QTD</Text>
-                </View>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>VALOR UNIT</Text>
-                </View>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>TOTAL</Text>
-                </View>
+                {budget.services.map((service, index) => (
+                  <View key={index} style={styles.tableRow}>
+                    <View style={[styles.tableCol, { width: '60%' }]}>
+                      <Text style={styles.tableCellLeft}>{service.description}</Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: '40%' }]}>
+                      <Text style={styles.tableCell}>{formatCurrency(service.total)}</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
-              {budget.services.map((service, index) => (
-                <View key={index} style={styles.tableRow}>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCellLeft}>{service.description}</Text>
+            </View>
+            <View style={{ flex: 1, marginLeft: 5 }}>
+              <Text style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 5, fontFamily: 'Open Sans' }}>
+                PEÇAS
+              </Text>
+              <View style={[styles.table, { marginBottom: 0 }]}>
+                <View style={styles.tableRow}>
+                  <View style={[styles.tableColHeader, { width: '60%' }]}>
+                    <Text style={styles.tableCellHeader}>DESCRIÇÃO</Text>
                   </View>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCell}>{service.quantity}</Text>
-                  </View>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCell}>{formatCurrency(service.unitPrice)}</Text>
-                  </View>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCell}>{formatCurrency(service.total)}</Text>
+                  <View style={[styles.tableColHeader, { width: '40%' }]}>
+                    <Text style={styles.tableCellHeader}>TOTAL</Text>
                   </View>
                 </View>
-              ))}
+                {budget.parts.map((part, index) => (
+                  <View key={index} style={styles.tableRow}>
+                    <View style={[styles.tableCol, { width: '60%' }]}>
+                      <Text style={styles.tableCellLeft}>
+                        {part.description}
+                        {part.partNumber && ` (${part.partNumber})`}
+                      </Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: '40%' }]}>
+                      <Text style={styles.tableCell}>{formatCurrency(part.total)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
             </View>
-          </>
-        )}
+          </View>
+        ) : (
+          // Se houver apenas serviços ou apenas peças, exibir normalmente
+          <>
+            {budget.services && budget.services.length > 0 && (
+              <>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 6, fontFamily: 'Open Sans' }}>
+                  SERVIÇOS
+                </Text>
+                <View style={styles.table}>
+                  <View style={styles.tableRow}>
+                    <View style={[styles.tableColHeader, { width: '60%' }]}>
+                      <Text style={styles.tableCellHeader}>DESCRIÇÃO</Text>
+                    </View>
+                    <View style={[styles.tableColHeader, { width: '40%' }]}>
+                      <Text style={styles.tableCellHeader}>TOTAL</Text>
+                    </View>
+                  </View>
+                  {budget.services.map((service, index) => (
+                    <View key={index} style={styles.tableRow}>
+                      <View style={[styles.tableCol, { width: '60%' }]}>
+                        <Text style={styles.tableCellLeft}>{service.description}</Text>
+                      </View>
+                      <View style={[styles.tableCol, { width: '40%' }]}>
+                        <Text style={styles.tableCell}>{formatCurrency(service.total)}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
 
-        {/* Tabela de peças */}
-        {budget.parts && budget.parts.length > 0 && (
-          <>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, marginTop: 10, fontFamily: 'Open Sans' }}>
-              PEÇAS
-            </Text>
-            <View style={styles.table}>
-              <View style={styles.tableRow}>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>DESCRIÇÃO</Text>
-                </View>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>QTD</Text>
-                </View>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>VALOR UNIT</Text>
-                </View>
-                <View style={styles.tableColHeader}>
-                  <Text style={styles.tableCellHeader}>TOTAL</Text>
-                </View>
-              </View>
-              {budget.parts.map((part, index) => (
-                <View key={index} style={styles.tableRow}>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCellLeft}>
-                      {part.description}
-                      {part.partNumber && ` (Ref: ${part.partNumber})`}
-                    </Text>
+            {budget.parts && budget.parts.length > 0 && (
+              <>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 6, marginTop: 8, fontFamily: 'Open Sans' }}>
+                  PEÇAS
+                </Text>
+                <View style={styles.table}>
+                  <View style={styles.tableRow}>
+                    <View style={[styles.tableColHeader, { width: '60%' }]}>
+                      <Text style={styles.tableCellHeader}>DESCRIÇÃO</Text>
+                    </View>
+                    <View style={[styles.tableColHeader, { width: '40%' }]}>
+                      <Text style={styles.tableCellHeader}>TOTAL</Text>
+                    </View>
                   </View>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCell}>{part.quantity}</Text>
-                  </View>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCell}>{formatCurrency(part.unitPrice)}</Text>
-                  </View>
-                  <View style={styles.tableCol}>
-                    <Text style={styles.tableCell}>{formatCurrency(part.total)}</Text>
-                  </View>
+                  {budget.parts.map((part, index) => (
+                    <View key={index} style={styles.tableRow}>
+                      <View style={[styles.tableCol, { width: '60%' }]}>
+                        <Text style={styles.tableCellLeft}>
+                          {part.description}
+                          {part.partNumber && ` (${part.partNumber})`}
+                        </Text>
+                      </View>
+                      <View style={[styles.tableCol, { width: '40%' }]}>
+                        <Text style={styles.tableCell}>{formatCurrency(part.total)}</Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              </>
+            )}
           </>
         )}
 
@@ -429,20 +449,6 @@ const BudgetPDF: React.FC<BudgetPDFProps> = ({ budget, customer, vehicle, logoPa
             <Text style={styles.totalText}>Observações: {budget.notes}</Text>
           </View>
         )}
-
-        {/* Campos de assinatura */}
-        <View style={styles.signaturesSection}>
-          <View style={styles.signatureBox}>
-            <Text style={styles.detailTitle}>ASSINATURA CLIENTE</Text>
-            <View style={styles.signatureLine} />
-            <Text style={styles.detailText}>(Nome do Cliente)</Text>
-          </View>
-          <View style={styles.signatureBox}>
-            <Text style={styles.detailTitle}>ASSINATURA RETÍFICA</Text>
-            <View style={styles.signatureLine} />
-            <Text style={styles.detailText}>(Retífica Figueiredo)</Text>
-          </View>
-        </View>
       </Page>
     </Document>
   );
