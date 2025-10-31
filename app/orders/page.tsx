@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { Plus, Calendar, User, Car, Clock, WrenchIcon } from "lucide-react"
-import { apiService } from "@/lib/api"
+import { apiServiceOptimized } from "@/lib/apiOptimized"
 import { Badge } from "@/components/ui/badge"
 import { AppHeader } from "@/components/app-header"
 import { EmptyState } from "@/components/empty-state"
 import AuthGuard from "@/components/auth-guard";
+import { useDataCache } from "@/hooks/useDataCache";
+import { createCustomerMap, createVehicleMap } from "@/lib/dataMaps";
 
 interface Customer {
   id: string;
@@ -60,7 +62,7 @@ interface PartItem {
 
 interface Order {
   id: string;
-  budgetId: string;
+  budgetId?: string;
   customerId: string;
   vehicleId: string;
   startDate: Date;
@@ -73,6 +75,19 @@ interface Order {
   total: number;
   notes?: string;
   mechanicNotes?: string;
+  createdAt: Date;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: Pagination;
 }
 
 export default function OrdersPage() {
@@ -85,66 +100,63 @@ export default function OrdersPage() {
 
 function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ 
+    page: 1, 
+    limit: 10, 
+    total: 0, 
+    pages: 1 
+  });
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const { data: cacheData, loading: cacheLoading, loadCachedData } = useDataCache();
 
-  // Cálculos para paginação
-  const indexOfLastOrder = currentPage * itemsPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - itemsPerPage;
-  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
-  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  // Criar mapas para busca eficiente - ESTE HOOK DEVE ESTAR ANTES DE QUALQUER CONDICIONAL
+  const customerMap = useMemo(() => {
+    return cacheData?.customers ? createCustomerMap(cacheData.customers) : new Map();
+  }, [cacheData?.customers]);
 
-  // Função para ir para uma página específica
-  const goToPage = (pageNumber: number) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-    }
-  };
+  const vehicleMap = useMemo(() => {
+    return cacheData?.vehicles ? createVehicleMap(cacheData.vehicles) : new Map();
+  }, [cacheData?.vehicles]);
 
+  // Carregar dados paginados
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchOrders = async () => {
       try {
-        // Fetch all required data in parallel
-        const [ordersData, customersData, vehiclesData] = await Promise.all([
-          apiService.getOrders(),
-          apiService.getCustomers(),
-          apiService.getVehicles()
-        ]);
-
-        // Convert dates for orders and remove duplicates by ID
-        const uniqueOrders = ordersData.filter((order, index, self) =>
-          index === self.findIndex(o => o.id === order.id)
-        );
-
-        const formattedOrders = uniqueOrders.map(order => ({
+        setLoading(true);
+        
+        // Buscar ordens com paginação
+        const paginatedOrders = await apiServiceOptimized.getOrders({ 
+          page: pagination.page, 
+          limit: pagination.limit 
+        }) as PaginatedResponse<Order>;
+        
+        // Converter datas para objetos Date
+        const formattedOrders = paginatedOrders.data.map(order => ({
           ...order,
           startDate: new Date(order.startDate),
           estimatedEndDate: new Date(order.estimatedEndDate),
-          actualEndDate: order.actualEndDate ? new Date(order.actualEndDate) : undefined
+          actualEndDate: order.actualEndDate ? new Date(order.actualEndDate) : undefined,
+          createdAt: new Date(order.createdAt)
         }));
 
-        // Ordenar as ordens por data de início, mais recentes primeiro
-        const sortedOrders = formattedOrders.sort((a, b) => 
-          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-        );
-
-        setOrders(sortedOrders);
-        setCustomers(customersData);
-        setVehicles(vehiclesData);
+        setOrders(formattedOrders);
+        setPagination(paginatedOrders.pagination);
       } catch (error) {
-        console.error('Erro ao buscar dados:', error);
+        console.error('Erro ao buscar ordens:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchOrders();
+  }, [pagination.page]);
 
-  if (loading) {
+  // Carregar dados de cache
+  useEffect(() => {
+    loadCachedData();
+  }, [loadCachedData]);
+
+  if (loading || cacheLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Carregando ordens de serviço...</div>
@@ -152,13 +164,23 @@ function OrdersContent() {
     );
   }
 
-  // Helper functions to find customer and vehicle by ID
-  const getCustomerById = (id: string) => {
-    return customers.find(c => c.id === id);
+  // Funções para navegar entre páginas
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page }));
+    }
   };
 
-  const getVehicleById = (id: string) => {
-    return vehicles.find(v => v.id === id);
+  const goToPreviousPage = () => {
+    if (pagination.page > 1) {
+      goToPage(pagination.page - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (pagination.page < pagination.pages) {
+      goToPage(pagination.page + 1);
+    }
   };
 
   return (
@@ -191,9 +213,9 @@ function OrdersContent() {
           ) : (
             <>
               <div className="space-y-4">
-                {currentOrders.map((order) => {
-                  const customer = getCustomerById(order.customerId);
-                  const vehicle = getVehicleById(order.vehicleId);
+                {orders.map((order) => {
+                  const customer = customerMap.get(order.customerId);
+                  const vehicle = vehicleMap.get(order.vehicleId);
 
                   return (
                     <Link key={order.id} href={`/orders/${order.id}`} className="block">
@@ -270,35 +292,49 @@ function OrdersContent() {
               </div>
               
               {/* Paginação */}
-              {totalPages > 1 && (
+              {pagination.pages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-muted-foreground">
-                    Mostrando {indexOfFirstOrder + 1} a {Math.min(indexOfLastOrder, orders.length)} de {orders.length} OS
+                    Mostrando {(pagination.page - 1) * pagination.limit + 1} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} OS
                   </div>
                   <div className="flex space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => goToPage(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={goToPreviousPage}
+                      disabled={pagination.page === 1}
                     >
                       Anterior
                     </Button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                      <Button
-                        key={pageNumber}
-                        variant={currentPage === pageNumber ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(pageNumber)}
-                      >
-                        {pageNumber}
-                      </Button>
-                    ))}
+                    {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                      // Mostrar páginas mais próximas da página atual
+                      let pageNum;
+                      if (pagination.pages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.pages - 2) {
+                        pageNum = pagination.pages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pagination.page === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(pageNum)}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => goToPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={goToNextPage}
+                      disabled={pagination.page === pagination.pages}
                     >
                       Próxima
                     </Button>

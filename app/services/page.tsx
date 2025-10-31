@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { Plus, Search, Edit, Trash2, Eye, Clock, Wrench } from "lucide-react";
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 import AuthGuard from "@/components/auth-guard";
 
 interface StandardService {
@@ -45,7 +45,9 @@ function ServicesContent() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const servicesData = await apiService.getServices();
+        const servicesRes = await apiServiceOptimized.getServices();
+        // Handle both paginated and non-paginated responses
+        const servicesData = Array.isArray(servicesRes) ? servicesRes : (servicesRes as any).data;
         // Converter datas para objetos Date
         const formattedServices = servicesData.map(service => ({
           ...service,
@@ -73,11 +75,11 @@ function ServicesContent() {
     try {
       if (editingService) {
         // Atualizar serviço existente
-        await apiService.createService(service); // A API REST PUT/PATCH seria melhor, mas usando POST por simplicidade
-        setServices(services.map(s => s.id === service.id ? service : s));
+        const updatedService = await apiServiceOptimized.updateService(service.id, service);
+        setServices(services.map(s => s.id === service.id ? updatedService : s));
       } else {
         // Adicionar novo serviço
-        const newService = await apiService.createService(service);
+        const newService = await apiServiceOptimized.createService(service);
         setServices([...services, newService]);
       }
     } catch (error) {
@@ -93,9 +95,10 @@ function ServicesContent() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+    
     try {
-      // Chamar API para excluir o serviço
-      // await apiService.deleteService(id); // Implementar método deleteService se necessário
+      await apiServiceOptimized.deleteService(id);
       setServices(services.filter(service => service.id !== id));
     } catch (error) {
       console.error('Erro ao excluir serviço:', error);

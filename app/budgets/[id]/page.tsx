@@ -9,7 +9,7 @@ import { ArrowLeft, User, Car, Calendar, FileText, CheckCircle, XCircle, Loader2
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import AuthGuard from "@/components/auth-guard"
-import { apiService } from "@/lib/api"
+import { apiServiceOptimized } from "@/lib/apiOptimized"
 import { AppHeader } from "@/components/app-header"
 import { Budget, Customer, Vehicle } from "@/lib/types"
 import { useBudgetPDF } from "@/components/pdf/useBudgetPDF";
@@ -74,10 +74,13 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [budgetData, ordersData] = await Promise.all([
-          apiService.getBudgetById(id),
-          apiService.getOrders() // Get all orders to check if any are associated with this budget
+        const [budgetData, ordersRes] = await Promise.all([
+          apiServiceOptimized.getBudgetById(id),
+          apiServiceOptimized.getOrders() // Get all orders to check if any are associated with this budget
         ]);
+        
+        // Handle both paginated and non-paginated responses
+        const ordersData = Array.isArray(ordersRes) ? ordersRes : (ordersRes as any).data;
         
         if (!budgetData) {
           notFound();
@@ -97,7 +100,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         let vehicleData = null;
         
         try {
-          customerData = await apiService.getCustomerById(budgetData.customerId);
+          customerData = await apiServiceOptimized.getCustomerById(budgetData.customerId);
         } catch (customerError) {
           console.error("Error fetching customer:", customerError);
           toast({
@@ -108,7 +111,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
         }
 
         try {
-          vehicleData = await apiService.getVehicleById(budgetData.vehicleId);
+          vehicleData = await apiServiceOptimized.getVehicleById(budgetData.vehicleId);
         } catch (vehicleError) {
           console.error("Error fetching vehicle:", vehicleError);
           toast({
@@ -152,7 +155,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
     if (!budget) return;
     try {
       const updatedBudget = { ...budget, status: "approved" };
-      await apiService.updateBudget(id, updatedBudget);
+      await apiServiceOptimized.updateBudget(id, updatedBudget);
 
       toast({
         title: "Orçamento aprovado!",
@@ -174,7 +177,7 @@ function BudgetDetailContent({ params }: { params: { id: string } }) {
     if (!budget) return;
     try {
       const updatedBudget = { ...budget, status: "rejected" };
-      await apiService.updateBudget(id, updatedBudget);
+      await apiServiceOptimized.updateBudget(id, updatedBudget);
 
       toast({
         title: "Orçamento rejeitado",

@@ -107,4 +107,8 @@ orderSchema.pre('findOneAndUpdate', async function(next) {
   next();
 });
 
+// Adicionar índices para melhorar performance de consultas
+orderSchema.index({ userId: 1, createdAt: -1 }); // Para ordenação por usuário e data
+orderSchema.index({ userId: 1, status: 1 }); // Para filtragem por usuário e status
+
 export const OrderModel = models.Order || model<Order & { userId: string }>('Order', orderSchema);

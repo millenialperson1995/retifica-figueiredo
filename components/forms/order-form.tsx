@@ -15,6 +15,7 @@ import type { ServiceItem, PartItem, StandardService, Customer, Vehicle, Invento
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "../ui/spinner";
 import { useToast } from "@/hooks/use-toast";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 
 interface OrderFormProps {
   isEditing?: boolean;
@@ -58,20 +59,17 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       }
       try {
         const [customersRes, vehiclesRes, inventoryRes, servicesRes] = await Promise.all([
-          fetch('/api/customers'),
-          fetch('/api/vehicles'),
-          fetch('/api/inventory'),
-          fetch('/api/services'),
+          apiServiceOptimized.getCustomers(),
+          apiServiceOptimized.getVehicles(),
+          apiServiceOptimized.getInventory(),
+          apiServiceOptimized.getServices(),
         ]);
 
-        if (!customersRes.ok || !vehiclesRes.ok || !inventoryRes.ok || !servicesRes.ok) {
-          throw new Error('Failed to fetch initial data');
-        }
-
-        const customersData = await customersRes.json();
-        const vehiclesData = await vehiclesRes.json();
-        const inventoryData = await inventoryRes.json();
-        const servicesData = await servicesRes.json();
+        // Handle both paginated and non-paginated responses
+        const customersData = Array.isArray(customersRes) ? customersRes : (customersRes as any).data;
+        const vehiclesData = Array.isArray(vehiclesRes) ? vehiclesRes : (vehiclesRes as any).data;
+        const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data;
+        const servicesData = Array.isArray(servicesRes) ? servicesRes : (servicesRes as any).data;
 
         setCustomers(customersData);
         setAllVehicles(vehiclesData);
@@ -100,13 +98,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       const fetchOrder = async () => {
         try {
           setIsLoading(true);
-          const response = await fetch(`/api/orders/${orderId}`);
-          
-          if (!response.ok) {
-            throw new Error('Order not found');
-          }
-          
-          const order = await response.json();
+          const order = await apiServiceOptimized.getOrderById(orderId);
           
           if (order) {
             // Set all order data
@@ -151,11 +143,7 @@ export function OrderForm({ isEditing = false, orderId }: OrderFormProps) {
       const fetchBudget = async () => {
         setIsLoading(true);
         try {
-          const response = await fetch(`/api/budgets/${budgetId}`);
-          if (!response.ok) {
-            throw new Error('Budget not found');
-          }
-          const budget = await response.json();
+          const budget = await apiServiceOptimized.getBudgetById(budgetId);
           if (budget) {
             setCustomerId(budget.customerId);
             setVehicleId(budget.vehicleId);

@@ -7,10 +7,23 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, Phone, Mail, MapPin, FileText, Plus, Car, DollarSign } from "lucide-react"
-import { apiService } from "@/lib/api"
+import { apiServiceOptimized } from "@/lib/apiOptimized"
 import type { Customer, Vehicle, Budget } from "@/lib/types"
 
 import AuthGuard from "@/components/auth-guard";
+
+// Tipos para paginação
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: Pagination;
+}
 
 export default function CustomerDetailPage() {
   return (
@@ -32,16 +45,18 @@ function CustomerDetailContent() {
       const fetchData = async () => {
         try {
           // Fetch customer
-          const customerData = await apiService.getCustomerById(params.id);
+          const customerData = await apiServiceOptimized.getCustomerById(params.id);
           setCustomer(customerData);
           
           // Fetch all vehicles and filter by customer ID
-          const allVehicles = await apiService.getVehicles();
+          const vehiclesRes = await apiServiceOptimized.getVehicles();
+          const allVehicles = Array.isArray(vehiclesRes) ? vehiclesRes : (vehiclesRes as PaginatedResponse<Vehicle>).data;
           const customerVehicles = allVehicles.filter(v => v.customerId === params.id);
           setVehicles(customerVehicles);
           
           // Fetch all budgets and filter by customer ID
-          const allBudgets = await apiService.getBudgets();
+          const budgetsRes = await apiServiceOptimized.getBudgets();
+          const allBudgets = Array.isArray(budgetsRes) ? budgetsRes : (budgetsRes as PaginatedResponse<Budget>).data;
           const customerBudgets = allBudgets.filter(b => b.customerId === params.id);
           // Sort by date, most recent first
           customerBudgets.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

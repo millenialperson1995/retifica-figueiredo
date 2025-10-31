@@ -80,14 +80,35 @@ export async function GET(req: NextRequest) {
      *                     description: Customer creation date
      */
 
-    // Filter customers by authenticated user ID
-    const customers = await CustomerModel.find({ userId: auth.userId });
-    return new Response(JSON.stringify(customers), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Obter parâmetros de paginação
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    // Buscar dados paginados
+    const customers = await CustomerModel
+      .find({ userId: auth.userId })
+      .skip(skip)
+      .limit(limit);
+
+    // Contar total para paginação
+    const total = await CustomerModel.countDocuments({ userId: auth.userId });
+
+    return new Response(
+      JSON.stringify({ 
+        data: customers,
+        pagination: { 
+          page, 
+          limit, 
+          total, 
+          pages: Math.ceil(total / limit) 
+        } 
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('Error fetching customers:', error);
     return new Response(JSON.stringify({ error: 'Error fetching customers' }), {

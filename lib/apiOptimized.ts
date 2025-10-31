@@ -1,5 +1,5 @@
-// lib/api.ts
-// Serviço para acessar as APIs do sistema - mantendo compatibilidade com versões anteriores
+// lib/apiOptimized.ts
+// Serviço otimizado para acessar as APIs do sistema com paginação e cache
 
 interface ApiResponse<T> {
   success: boolean;
@@ -23,7 +23,7 @@ interface PaginatedResponse<T> {
   };
 }
 
-class ApiService {
+class ApiServiceOptimized {
   private baseUrl = '/api'; // Usando rota interna do Next.js
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -91,22 +91,14 @@ class ApiService {
     return response.json();
   }
 
-  // Customer API methods - mantendo compatibilidade com chamadas antigas
+  // Customer API methods
   async getCustomers(pagination?: PaginationParams): Promise<PaginatedResponse<any> | any[]> {
     const params = new URLSearchParams();
     if (pagination?.page) params.append('page', pagination.page.toString());
     if (pagination?.limit) params.append('limit', pagination.limit.toString());
     
     const endpoint = params.toString() ? `/customers?${params.toString()}` : '/customers';
-    const response = await this.request(endpoint);
-    
-    // Se a resposta tiver formato paginado, retorne como está
-    if (response && typeof response === 'object' && 'data' in response && 'pagination' in response) {
-      return response;
-    }
-    
-    // Caso contrário, retorne apenas o array para compatibilidade
-    return response;
+    return this.request(endpoint);
   }
 
   async getCustomerById(id: string): Promise<any> {
@@ -140,15 +132,7 @@ class ApiService {
     if (pagination?.limit) params.append('limit', pagination.limit.toString());
     
     const endpoint = params.toString() ? `/vehicles?${params.toString()}` : '/vehicles';
-    const response = await this.request(endpoint);
-    
-    // Se a resposta tiver formato paginado, retorne como está
-    if (response && typeof response === 'object' && 'data' in response && 'pagination' in response) {
-      return response;
-    }
-    
-    // Caso contrário, retorne apenas o array para compatibilidade
-    return response;
+    return this.request(endpoint);
   }
 
   async getVehicleById(id: string): Promise<any> {
@@ -182,15 +166,7 @@ class ApiService {
     if (pagination?.limit) params.append('limit', pagination.limit.toString());
     
     const endpoint = params.toString() ? `/inventory?${params.toString()}` : '/inventory';
-    const response = await this.request(endpoint);
-    
-    // Se a resposta tiver formato paginado, retorne como está
-    if (response && typeof response === 'object' && 'data' in response && 'pagination' in response) {
-      return response;
-    }
-    
-    // Caso contrário, retorne apenas o array para compatibilidade
-    return response;
+    return this.request(endpoint);
   }
 
   async getInventoryItem(id: string): Promise<any> {
@@ -224,15 +200,7 @@ class ApiService {
     if (pagination?.limit) params.append('limit', pagination.limit.toString());
     
     const endpoint = params.toString() ? `/budgets?${params.toString()}` : '/budgets';
-    const response = await this.request(endpoint);
-    
-    // Se a resposta tiver formato paginado, retorne como está
-    if (response && typeof response === 'object' && 'data' in response && 'pagination' in response) {
-      return response;
-    }
-    
-    // Caso contrário, retorne apenas o array para compatibilidade
-    return response;
+    return this.request(endpoint);
   }
 
   async getBudgetById(id: string): Promise<any> {
@@ -266,15 +234,7 @@ class ApiService {
     if (pagination?.limit) params.append('limit', pagination.limit.toString());
     
     const endpoint = params.toString() ? `/orders?${params.toString()}` : '/orders';
-    const response = await this.request(endpoint);
-    
-    // Se a resposta tiver formato paginado, retorne como está
-    if (response && typeof response === 'object' && 'data' in response && 'pagination' in response) {
-      return response;
-    }
-    
-    // Caso contrário, retorne apenas o array para compatibilidade
-    return response;
+    return this.request(endpoint);
   }
 
   async getOrderById(id: string): Promise<any> {
@@ -308,15 +268,7 @@ class ApiService {
     if (pagination?.limit) params.append('limit', pagination.limit.toString());
     
     const endpoint = params.toString() ? `/services?${params.toString()}` : '/services';
-    const response = await this.request(endpoint);
-    
-    // Se a resposta tiver formato paginado, retorne como está
-    if (response && typeof response === 'object' && 'data' in response && 'pagination' in response) {
-      return response;
-    }
-    
-    // Caso contrário, retorne apenas o array para compatibilidade
-    return response;
+    return this.request(endpoint);
   }
 
   async createService(serviceData: any): Promise<any> {
@@ -340,4 +292,4 @@ class ApiService {
   }
 }
 
-export const apiService = new ApiService();
+export const apiServiceOptimized = new ApiServiceOptimized();

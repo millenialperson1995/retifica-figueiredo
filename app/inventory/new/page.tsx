@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { useRouter } from "next/navigation";
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 
 // Define the form schema
 const inventoryItemSchema = z.object({
@@ -73,7 +73,7 @@ function NewInventoryContent() {
         notes: values.notes || undefined,
       };
 
-      const created = await apiService.createInventoryItem(payload);
+      const created = await apiServiceOptimized.createInventoryItem(payload);
 
       form.reset();
       alert("Item adicionado ao estoque com sucesso!");

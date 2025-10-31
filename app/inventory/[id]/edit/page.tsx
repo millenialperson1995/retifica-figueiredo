@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { useRouter } from "next/navigation";
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 
 // Define the form schema
 const inventoryItemSchema = z.object({
@@ -71,7 +71,7 @@ function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
   useEffect(() => {
     const loadItem = async () => {
       try {
-        const data = await apiService.getInventoryItem(params.id);
+        const data = await apiServiceOptimized.getInventoryItem(params.id);
         // convert to client-friendly values
         setItem(data);
         form.reset({
@@ -117,7 +117,7 @@ function InventoryItemEditContent({ params }: InventoryItemEditPageProps) {
         notes: values.notes || undefined,
       };
 
-      const updated = await apiService.updateInventoryItem(params.id, payload);
+      const updated = await apiServiceOptimized.updateInventoryItem(params.id, payload);
       setIsSubmitting(false);
       toast({
         title: "Item atualizado",

@@ -105,4 +105,8 @@ budgetSchema.pre('findOneAndUpdate', async function(next) {
   next();
 });
 
+// Adicionar índices para melhorar performance de consultas
+budgetSchema.index({ userId: 1, date: -1 }); // Para ordenação por usuário e data
+budgetSchema.index({ userId: 1, status: 1 }); // Para filtragem por usuário e status
+
 export const BudgetModel = models.Budget || model<Budget & { userId: string }>('Budget', budgetSchema);

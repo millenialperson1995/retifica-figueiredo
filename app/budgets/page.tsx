@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { Plus, Calendar, User, Car, FileText } from "lucide-react"
-import { apiService } from "@/lib/api"
+import { apiServiceOptimized } from "@/lib/apiOptimized"
 import { Badge } from "@/components/ui/badge"
 import { AppHeader } from "@/components/app-header"
 import { EmptyState } from "@/components/empty-state"
 import AuthGuard from "@/components/auth-guard";
+import { useDataCache } from "@/hooks/useDataCache";
+import { createCustomerMap, createVehicleMap } from "@/lib/dataMaps";
 
 interface Customer {
   id: string;
@@ -71,6 +73,19 @@ interface Budget {
   discount: number;
   total: number;
   notes?: string;
+  createdAt: Date;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: Pagination;
 }
 
 export default function BudgetsPage() {
@@ -83,64 +98,61 @@ export default function BudgetsPage() {
 
 function BudgetsContent() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ 
+    page: 1, 
+    limit: 10, 
+    total: 0, 
+    pages: 1 
+  });
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const { data: cacheData, loading: cacheLoading, loadCachedData } = useDataCache();
 
-  // Cálculos para paginação
-  const indexOfLastBudget = currentPage * itemsPerPage;
-  const indexOfFirstBudget = indexOfLastBudget - itemsPerPage;
-  const currentBudgets = budgets.slice(indexOfFirstBudget, indexOfLastBudget);
-  const totalPages = Math.ceil(budgets.length / itemsPerPage);
+  // Criar mapas para busca eficiente - ESTE HOOK DEVE ESTAR ANTES DE QUALQUER CONDICIONAL
+  const customerMap = useMemo(() => {
+    return cacheData?.customers ? createCustomerMap(cacheData.customers) : new Map();
+  }, [cacheData?.customers]);
 
-  // Função para ir para uma página específica
-  const goToPage = (pageNumber: number) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-    }
-  };
+  const vehicleMap = useMemo(() => {
+    return cacheData?.vehicles ? createVehicleMap(cacheData.vehicles) : new Map();
+  }, [cacheData?.vehicles]);
 
+  // Carregar dados paginados
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBudgets = async () => {
       try {
-        // Fetch all required data in parallel
-        const [budgetsData, customersData, vehiclesData] = await Promise.all([
-          apiService.getBudgets(),
-          apiService.getCustomers(),
-          apiService.getVehicles()
-        ]);
-
-        // Convert dates for budgets and remove duplicates by ID
-        const uniqueBudgets = budgetsData.filter((budget, index, self) =>
-          index === self.findIndex(b => b.id === budget.id)
-        );
-
-        const formattedBudgets = uniqueBudgets.map(budget => ({
+        setLoading(true);
+        
+        // Buscar orçamentos com paginação
+        const paginatedBudgets = await apiServiceOptimized.getBudgets({ 
+          page: pagination.page, 
+          limit: pagination.limit 
+        }) as PaginatedResponse<Budget>;
+        
+        // Converter datas para objetos Date
+        const formattedBudgets = paginatedBudgets.data.map(budget => ({
           ...budget,
-          date: new Date(budget.date)
+          date: new Date(budget.date),
+          createdAt: new Date(budget.createdAt)
         }));
 
-        // Ordenar os orçamentos por data, mais recentes primeiro
-        const sortedBudgets = formattedBudgets.sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-
-        setBudgets(sortedBudgets);
-        setCustomers(customersData);
-        setVehicles(vehiclesData);
+        setBudgets(formattedBudgets);
+        setPagination(paginatedBudgets.pagination);
       } catch (error) {
-        console.error('Erro ao buscar dados:', error);
+        console.error('Erro ao buscar orçamentos:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchBudgets();
+  }, [pagination.page]);
 
-  if (loading) {
+  // Carregar dados de cache
+  useEffect(() => {
+    loadCachedData();
+  }, [loadCachedData]);
+
+  if (loading || cacheLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Carregando orçamentos...</div>
@@ -148,13 +160,23 @@ function BudgetsContent() {
     );
   }
 
-  // Helper functions to find customer and vehicle by ID
-  const getCustomerById = (id: string) => {
-    return customers.find(c => c.id === id);
+  // Funções para navegar entre páginas
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= pagination.pages) {
+      setPagination(prev => ({ ...prev, page }));
+    }
   };
 
-  const getVehicleById = (id: string) => {
-    return vehicles.find(v => v.id === id);
+  const goToPreviousPage = () => {
+    if (pagination.page > 1) {
+      goToPage(pagination.page - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (pagination.page < pagination.pages) {
+      goToPage(pagination.page + 1);
+    }
   };
 
   return (
@@ -177,7 +199,7 @@ function BudgetsContent() {
               <CardContent className="p-0">
                 <EmptyState
                   icon={FileText}
-                  title="Nenhum orçamento criado"
+                  title="Nenhuma orçamento criado"
                   description="Crie seu primeiro orçamento para começar a gerenciar seus serviços"
                   actionLabel="Criar Orçamento"
                   actionHref="/budgets/new"
@@ -187,9 +209,9 @@ function BudgetsContent() {
           ) : (
             <>
               <div className="space-y-4">
-                {currentBudgets.map((budget) => {
-                  const customer = getCustomerById(budget.customerId);
-                  const vehicle = getVehicleById(budget.vehicleId);
+                {budgets.map((budget) => {
+                  const customer = customerMap.get(budget.customerId);
+                  const vehicle = vehicleMap.get(budget.vehicleId);
 
                   return (
                     <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
@@ -256,35 +278,49 @@ function BudgetsContent() {
               </div>
               
               {/* Paginação */}
-              {totalPages > 1 && (
+              {pagination.pages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <div className="text-sm text-muted-foreground">
-                    Mostrando {indexOfFirstBudget + 1} a {Math.min(indexOfLastBudget, budgets.length)} de {budgets.length} orçamentos
+                    Mostrando {(pagination.page - 1) * pagination.limit + 1} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} orçamentos
                   </div>
                   <div className="flex space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => goToPage(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={goToPreviousPage}
+                      disabled={pagination.page === 1}
                     >
                       Anterior
                     </Button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                      <Button
-                        key={pageNumber}
-                        variant={currentPage === pageNumber ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(pageNumber)}
-                      >
-                        {pageNumber}
-                      </Button>
-                    ))}
+                    {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                      // Mostrar páginas mais próximas da página atual
+                      let pageNum;
+                      if (pagination.pages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.pages - 2) {
+                        pageNum = pagination.pages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pagination.page === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(pageNum)}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => goToPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={goToNextPage}
+                      disabled={pagination.page === pagination.pages}
                     >
                       Próxima
                     </Button>

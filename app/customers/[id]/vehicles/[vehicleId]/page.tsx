@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, FileText } from "lucide-react"
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 
 import AuthGuard from "@/components/auth-guard";
 
@@ -30,13 +30,17 @@ function VehicleDetailContent() {
     const fetchVehicle = async () => {
       try {
         if (params.vehicleId) {
-          const [vehicleData, budgetsData, ordersData] = await Promise.all([
-            apiService.getVehicleById(params.vehicleId),
-            apiService.getBudgets(),
-            apiService.getOrders(),
+          const [vehicleData, budgetsRes, ordersRes] = await Promise.all([
+            apiServiceOptimized.getVehicleById(params.vehicleId),
+            apiServiceOptimized.getBudgets(),
+            apiServiceOptimized.getOrders(),
           ]);
 
           setVehicle(vehicleData);
+
+          // Handle both paginated and non-paginated responses
+          const budgetsData = Array.isArray(budgetsRes) ? budgetsRes : (budgetsRes as any).data;
+          const ordersData = Array.isArray(ordersRes) ? ordersRes : (ordersRes as any).data;
 
           // Convert dates in budgets
           const budgets = (budgetsData || []).map((b: any) => ({ ...b, date: b.date ? new Date(b.date) : undefined }));

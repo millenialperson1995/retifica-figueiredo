@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { Search, Package, Plus, AlertCircle } from "lucide-react";
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 import { InventoryItem } from "@/lib/types";
 
 import AuthGuard from "@/components/auth-guard";
@@ -31,7 +31,9 @@ function InventoryContent() {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const inventoryData = await apiService.getInventory();
+        const inventoryRes = await apiServiceOptimized.getInventory();
+        // Handle both paginated and non-paginated responses
+        const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data;
         setInventory(inventoryData);
       } catch (error) {
         console.error('Erro ao buscar itens de estoque:', error);

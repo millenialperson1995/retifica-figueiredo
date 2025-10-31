@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { FileText, Wrench, Users, TrendingUp, Plus, Calendar, Clock, BarChart3, PieChart } from "lucide-react"
-import { apiService } from "@/lib/api"
+import { apiServiceOptimized } from "@/lib/apiOptimized"
 import { Badge } from "@/components/ui/badge"
 import { AppHeader } from "@/components/app-header"
 import AuthGuard from "@/components/auth-guard";
+import { useDataCache } from "@/hooks/useDataCache";
+import { createCustomerMap, createVehicleMap } from "@/lib/dataMaps";
 
 interface Customer {
   id: string;
@@ -70,11 +72,12 @@ interface Budget {
   discount: number;
   total: number;
   notes?: string;
+  createdAt: Date;
 }
 
 interface Order {
   id: string;
-  budgetId: string;
+  budgetId?: string;
   customerId: string;
   vehicleId: string;
   startDate: Date;
@@ -87,6 +90,20 @@ interface Order {
   total: number;
   notes?: string;
   mechanicNotes?: string;
+  createdAt: Date;
+}
+
+// Tipos para paginação
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: Pagination;
 }
 
 export default function HomePage() {
@@ -100,41 +117,50 @@ export default function HomePage() {
 function DashboardContent() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const { data: cacheData, loading: cacheLoading, loadCachedData } = useDataCache();
+
+  // Criar mapas para busca eficiente - ESTE HOOK DEVE ESTAR ANTES DE QUALQUER CONDICIONAL
+  const customerMap = useMemo(() => {
+    return cacheData?.customers ? createCustomerMap(cacheData.customers) : new Map();
+  }, [cacheData?.customers]);
+
+  const vehicleMap = useMemo(() => {
+    return cacheData?.vehicles ? createVehicleMap(cacheData.vehicles) : new Map();
+  }, [cacheData?.vehicles]);
+
+  // Carregar dados paginados (pegando apenas as últimas 10 de cada para o dashboard)
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [budgetsData, ordersData, customersData] = await Promise.all([
-          apiService.getBudgets(),
-          apiService.getOrders(),
-          apiService.getCustomers()
+        setLoading(true);
+        
+        // Buscar apenas as últimas 10 de cada para o dashboard
+        const [budgetsRes, ordersRes] = await Promise.all([
+          apiServiceOptimized.getBudgets({ page: 1, limit: 10 }),
+          apiServiceOptimized.getOrders({ page: 1, limit: 10 })
         ]);
         
-        // Converter datas para objetos Date e remover duplicatas
-        const uniqueBudgets = budgetsData.filter((budget, index, self) =>
-          index === self.findIndex(b => b.id === budget.id)
-        );
+        const budgetsData = (budgetsRes as PaginatedResponse<Budget>).data;
+        const ordersData = (ordersRes as PaginatedResponse<Order>).data;
         
-        const uniqueOrders = ordersData.filter((order, index, self) =>
-          index === self.findIndex(o => o.id === order.id)
-        );
-        
-        const formattedBudgets = uniqueBudgets.map(budget => ({
+        // Converter datas para objetos Date
+        const formattedBudgets = budgetsData.map(budget => ({
           ...budget,
-          date: new Date(budget.date)
+          date: new Date(budget.date),
+          createdAt: new Date(budget.createdAt)
         }));
         
-        const formattedOrders = uniqueOrders.map(order => ({
+        const formattedOrders = ordersData.map(order => ({
           ...order,
           startDate: new Date(order.startDate),
-          estimatedEndDate: new Date(order.estimatedEndDate)
+          estimatedEndDate: new Date(order.estimatedEndDate),
+          actualEndDate: order.actualEndDate ? new Date(order.actualEndDate) : undefined,
+          createdAt: new Date(order.createdAt)
         }));
         
         setBudgets(formattedBudgets);
         setOrders(formattedOrders);
-        setCustomers(customersData);
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
       } finally {
@@ -145,7 +171,12 @@ function DashboardContent() {
     fetchData();
   }, []);
 
-  if (loading) {
+  // Carregar dados de cache
+  useEffect(() => {
+    loadCachedData();
+  }, [loadCachedData]);
+
+  if (loading || cacheLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Carregando dados...</div>
@@ -153,35 +184,25 @@ function DashboardContent() {
     );
   }
 
-  const pendingBudgets = budgets.filter((b) => b.status === "pending").length
-  const approvedBudgets = budgets.filter((b) => b.status === "approved").length
-  const inProgressOrders = orders.filter((o) => o.status === "in-progress").length
-  const completedOrders = orders.filter((o) => o.status === "completed").length
-  const totalBudgets = budgets.length
-  const totalCustomers = customers.length
-  const monthlyRevenue = budgets.filter((b) => b.status === "approved").reduce((sum, b) => sum + b.total, 0)
+  // Calcular métricas
+  const pendingBudgets = budgets.filter((b) => b.status === "pending").length;
+  const approvedBudgets = budgets.filter((b) => b.status === "approved").length;
+  const inProgressOrders = orders.filter((o) => o.status === "in-progress").length;
+  const completedOrders = orders.filter((o) => o.status === "completed").length;
+  const totalBudgets = budgets.length;
+  const totalCustomers = cacheData?.customers?.length || 0;
+  const monthlyRevenue = budgets
+    .filter((b) => b.status === "approved")
+    .reduce((sum, b) => sum + b.total, 0);
 
-  // Recent activity - combine budgets and orders
+  // Atividade recente - combinar orçamentos e ordens
   const recentBudgets = [...budgets]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
-    .slice(0, 3)
+    .slice(0, 3);
+    
   const recentOrders = [...orders]
     .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
-    .slice(0, 3)
-
-  // Função para obter cliente por ID
-  const getCustomerById = (id: string) => customers.find(c => c.id === id);
-
-  // Função para obter veículo por ID (você precisará implementar isso no futuro)
-  const getVehicleById = (id: string) => {
-    // Este é apenas um placeholder - em uma implementação completa, você buscaria o veículo
-    return {
-      id,
-      plate: 'ABC-1234', // placeholder
-      brand: 'N/A', // placeholder
-      model: 'N/A', // placeholder
-    } as any as Vehicle;
-  };
+    .slice(0, 3);
 
   return (
     <>
@@ -436,8 +457,8 @@ function DashboardContent() {
               
               <div className="flex flex-col gap-4">
                 {recentOrders.map((order) => {
-                  const customer = getCustomerById(order.customerId)
-                  const vehicle = getVehicleById(order.vehicleId)
+                  const customer = customerMap.get(order.customerId);
+                  const vehicle = vehicleMap.get(order.vehicleId);
                   
                   return (
                     <Link key={order.id} href={`/orders/${order.id}`} className="block">
@@ -477,7 +498,7 @@ function DashboardContent() {
                               </Badge>
                             </div>
                             <div className="text-xs text-muted-foreground truncate">
-                              {customer?.name} • {vehicle?.plate}
+                              {customer?.name} • {vehicle?.plate || 'Veículo'}
                             </div>
                           </div>
                         </div>
@@ -519,8 +540,8 @@ function DashboardContent() {
               
               <div className="flex flex-col gap-4">
                 {recentBudgets.map((budget) => {
-                  const customer = getCustomerById(budget.customerId)
-                  const vehicle = getVehicleById(budget.vehicleId)
+                  const customer = customerMap.get(budget.customerId);
+                  const vehicle = vehicleMap.get(budget.vehicleId);
                   
                   return (
                     <Link key={budget.id} href={`/budgets/${budget.id}`} className="block">
@@ -556,7 +577,7 @@ function DashboardContent() {
                               </Badge>
                             </div>
                             <div className="text-xs text-muted-foreground truncate">
-                              {customer?.name} • {vehicle?.plate}
+                              {customer?.name} • {vehicle?.plate || 'Veículo'}
                             </div>
                           </div>
                         </div>

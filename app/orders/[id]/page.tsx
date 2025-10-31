@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { ArrowLeft, User, Car, Calendar, Clock, FileText, CheckCircle, XCircle, PlayCircle, AlertCircle, Loader2, Download } from "lucide-react"
-import { apiService } from "@/lib/api"
+import { apiServiceOptimized } from "@/lib/apiOptimized"
 import { Order, Customer, Vehicle } from '@/lib/types'
 import {
   AlertDialog,
@@ -56,7 +56,7 @@ function OrderDetailContent({ id }: { id: string }) {
 
     const fetchData = async () => {
       try {
-        const orderData = await apiService.getOrderById(id)
+        const orderData = await apiServiceOptimized.getOrderById(id)
         // Convert date strings from API to Date objects
         if (orderData) {
           orderData.startDate = orderData.startDate ? new Date(orderData.startDate) : undefined
@@ -66,8 +66,8 @@ function OrderDetailContent({ id }: { id: string }) {
         setOrder(orderData as unknown as Order)
 
         const [customerData, vehicleData] = await Promise.all([
-          apiService.getCustomerById(orderData.customerId),
-          apiService.getVehicleById(orderData.vehicleId),
+          apiServiceOptimized.getCustomerById(orderData.customerId),
+          apiServiceOptimized.getVehicleById(orderData.vehicleId),
         ])
         setCustomer(customerData)
         setVehicle(vehicleData)
@@ -87,7 +87,7 @@ function OrderDetailContent({ id }: { id: string }) {
     if (!order) return
 
     try {
-      const updatedOrder = await apiService.updateOrder(id, { status: newStatus })
+      const updatedOrder = await apiServiceOptimized.updateOrder(id, { status: newStatus })
       setOrder(updatedOrder)
       setShowStatusDialog(null)
       toast({

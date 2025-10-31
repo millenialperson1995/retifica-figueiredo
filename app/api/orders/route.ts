@@ -38,107 +38,157 @@ export async function GET(req: NextRequest) {
      *     tags: [Orders]
      *     security:
      *       - bearerAuth: []
+     *     parameters:
+     *       - in: query
+     *         name: page
+     *         schema:
+     *           type: integer
+     *         description: Page number for pagination
+     *       - in: query
+     *         name: limit
+     *         schema:
+     *           type: integer
+     *         description: Number of items per page
      *     responses:
      *       200:
      *         description: List of orders
      *         content:
      *           application/json:
      *             schema:
-     *               type: array
-     *               items:
-     *                 type: object
-     *                 properties:
-     *                   id:
-     *                     type: string
-     *                     description: Order ID
-     *                   budgetId:
-     *                     type: string
-     *                     description: Budget ID
-     *                   customerId:
-     *                     type: string
-     *                     description: Customer ID
-     *                   vehicleId:
-     *                     type: string
-     *                     description: Vehicle ID
-     *                   startDate:
-     *                     type: string
-     *                     description: Start date
-     *                   estimatedEndDate:
-     *                     type: string
-     *                     description: Estimated end date
-     *                   actualEndDate:
-     *                     type: string
-     *                     description: Actual end date
-     *                   status:
-     *                     type: string
-     *                     description: Order status
-     *                     enum: [pending, in-progress, completed, cancelled]
-     *                   services:
-     *                     type: array
-     *                     items:
-     *                       type: object
-     *                       properties:
-     *                         id:
-     *                           type: string
-     *                           description: Service ID
-     *                         description:
-     *                           type: string
-     *                           description: Service description
-     *                         quantity:
-     *                           type: number
-     *                           description: Service quantity
-     *                         unitPrice:
-     *                           type: number
-     *                           description: Service unit price
-     *                         total:
-     *                           type: number
-     *                           description: Service total
-     *                   parts:
-     *                     type: array
-     *                     items:
-     *                       type: object
-     *                       properties:
-     *                         id:
-     *                           type: string
-     *                           description: Part ID
-     *                         description:
-     *                           type: string
-     *                           description: Part description
-     *                         partNumber:
-     *                           type: string
-     *                           description: Part number
-     *                         quantity:
-     *                           type: number
-     *                           description: Part quantity
-     *                         unitPrice:
-     *                           type: number
-     *                           description: Part unit price
-     *                         total:
-     *                           type: number
-     *                           description: Part total
-     *                         inventoryId:
-     *                           type: string
-     *                           description: Inventory ID
-     *                   total:
-     *                     type: number
-     *                     description: Total amount
-     *                   notes:
-     *                     type: string
-     *                     description: Additional notes
-     *                   mechanicNotes:
-     *                     type: string
-     *                     description: Mechanic notes
+     *               type: object
+     *               properties:
+     *                 data:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *                     properties:
+     *                       id:
+     *                         type: string
+     *                         description: Order ID
+     *                       budgetId:
+     *                         type: string
+     *                         description: Budget ID
+     *                       customerId:
+     *                         type: string
+     *                         description: Customer ID
+     *                       vehicleId:
+     *                         type: string
+     *                         description: Vehicle ID
+     *                       startDate:
+     *                         type: string
+     *                         description: Start date
+     *                       estimatedEndDate:
+     *                         type: string
+     *                         description: Estimated end date
+     *                       actualEndDate:
+     *                         type: string
+     *                         description: Actual end date
+     *                       status:
+     *                         type: string
+     *                         description: Order status
+     *                         enum: [pending, in-progress, completed, cancelled]
+     *                       services:
+     *                         type: array
+     *                         items:
+     *                           type: object
+     *                           properties:
+     *                             id:
+     *                               type: string
+     *                               description: Service ID
+     *                             description:
+     *                               type: string
+     *                               description: Service description
+     *                             quantity:
+     *                               type: number
+     *                               description: Service quantity
+     *                             unitPrice:
+     *                               type: number
+     *                               description: Service unit price
+     *                             total:
+     *                               type: number
+     *                               description: Service total
+     *                       parts:
+     *                         type: array
+     *                         items:
+     *                           type: object
+     *                           properties:
+     *                             id:
+     *                               type: string
+     *                               description: Part ID
+     *                             description:
+     *                               type: string
+     *                               description: Part description
+     *                             partNumber:
+     *                               type: string
+     *                               description: Part number
+     *                             quantity:
+     *                               type: number
+     *                               description: Part quantity
+     *                             unitPrice:
+     *                               type: number
+     *                               description: Part unit price
+     *                             total:
+     *                               type: number
+     *                               description: Part total
+     *                             inventoryId:
+     *                               type: string
+     *                               description: Inventory ID
+     *                       total:
+     *                         type: number
+     *                         description: Total amount
+     *                       notes:
+     *                         type: string
+     *                         description: Additional notes
+     *                       mechanicNotes:
+     *                         type: string
+     *                         description: Mechanic notes
+     *                 pagination:
+     *                   type: object
+     *                   properties:
+     *                     page:
+     *                       type: integer
+     *                       description: Current page
+     *                     limit:
+     *                       type: integer
+     *                       description: Limit per page
+     *                     total:
+     *                       type: integer
+     *                       description: Total items
+     *                     pages:
+     *                       type: integer
+     *                       description: Total pages
      */
 
-  // Filter orders by authenticated user ID and sort by createdAt (newest first).
-  // Keep startDate as a secondary sort key so orders without createdAt still have a deterministic order.
-  const orders = await OrderModel.find({ userId: auth.userId }).sort({ createdAt: -1, startDate: -1 });
-    return new Response(JSON.stringify(orders), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Obter parâmetros de paginação
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    // Buscar dados paginados
+    const orders = await OrderModel
+      .find({ userId: auth.userId })
+      .sort({ createdAt: -1, startDate: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Contar total para paginação
+    const total = await OrderModel.countDocuments({ userId: auth.userId });
+
+    return new Response(
+      JSON.stringify({ 
+        data: orders,
+        pagination: { 
+          page, 
+          limit, 
+          total, 
+          pages: Math.ceil(total / limit) 
+        } 
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('Error fetching orders:', error);
     return new Response(JSON.stringify({ error: 'Error fetching orders' }), {

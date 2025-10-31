@@ -15,7 +15,21 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-
+  // Otimizações de servidor
+  async headers() {
+    return [
+      {
+        // Configurar headers de cache para rotas específicas
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default withPWA(nextConfig);

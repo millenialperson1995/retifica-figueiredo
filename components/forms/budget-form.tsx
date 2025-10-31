@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { ArrowLeft, Plus, Trash2, Wrench } from "lucide-react";
 import type { ServiceItem, PartItem, Budget, InventoryItem, StandardService } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 import { useToast } from "@/hooks/use-toast";
 
 interface BudgetFormProps {
@@ -55,12 +55,18 @@ export function BudgetForm({ budget, isEditing = false }: BudgetFormProps) {
     const fetchData = async () => {
       try {
         // Carregar clientes, veículos, inventário e serviços padrão
-        const [customersData, vehiclesData, inventoryData, servicesData] = await Promise.all([
-          apiService.getCustomers(),
-          apiService.getVehicles(),
-          apiService.getInventory(),
-          apiService.getServices(),
+        const [customersRes, vehiclesRes, inventoryRes, servicesRes] = await Promise.all([
+          apiServiceOptimized.getCustomers(),
+          apiServiceOptimized.getVehicles(),
+          apiServiceOptimized.getInventory(),
+          apiServiceOptimized.getServices(),
         ]);
+
+        // Handle both paginated and non-paginated responses
+        const customersData = Array.isArray(customersRes) ? customersRes : (customersRes as any).data;
+        const vehiclesData = Array.isArray(vehiclesRes) ? vehiclesRes : (vehiclesRes as any).data;
+        const inventoryData = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes as any).data;
+        const servicesData = Array.isArray(servicesRes) ? servicesRes : (servicesRes as any).data;
 
         setCustomers(customersData || []);
         setAllVehicles(vehiclesData || []);
@@ -242,9 +248,9 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       // Salvar o orçamento
       if (isEditing) {
-        await apiService.updateBudget(budget!.id, newBudget);
+        await apiServiceOptimized.updateBudget(budget!.id, newBudget);
       } else {
-        await apiService.createBudget(newBudget);
+        await apiServiceOptimized.createBudget(newBudget);
       }
 
       toast({

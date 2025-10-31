@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { apiService } from "@/lib/api";
+import { apiServiceOptimized } from "@/lib/apiOptimized";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +19,7 @@ export default function DeleteButton({ id }: DeleteButtonProps) {
     if (!confirm('Tem certeza que deseja excluir este item? Essa ação não pode ser desfeita.')) return;
     setLoading(true);
     try {
-      await apiService.deleteInventoryItem(id);
+      await apiServiceOptimized.deleteInventoryItem(id);
       toast({
         title: "Item excluído",
         description: "O item foi excluído com sucesso!",
