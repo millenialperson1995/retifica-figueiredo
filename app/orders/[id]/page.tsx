@@ -262,8 +262,8 @@ function ListItemCard({ title, items }: { title: string, items: { id: string, de
       <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0 text-sm">
+          {items.map((item, index) => (
+            <div key={item.id || `item-${index}`} className="flex items-start justify-between pb-3 border-b border-border last:border-0 last:pb-0 text-sm">
               <div className="flex-1 pr-4">
                 <div className="font-medium">{item.description}</div>
                 <div className="text-xs text-muted-foreground mt-1">

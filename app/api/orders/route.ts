@@ -4,6 +4,7 @@ import { connectToDatabase } from '../../../lib/mongodb';
 import { OrderModel } from '../../../lib/models/Order';
 import { InventoryItemModel } from '../../../lib/models/InventoryItem';
 import { authenticateAPIRequest } from '../../../lib/auth';
+import { createOrderSchema } from '../../../lib/schemas';
 
 // Swagger documentation for orders endpoint
 /**
@@ -373,8 +374,22 @@ export async function POST(req: NextRequest) {
      */
 
     const body = await req.json();
+
+    // Validate the request body
+    const validation = createOrderSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: 'Invalid input', details: validation.error.flatten() }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    const validatedData = validation.data;
+
     const order = new OrderModel({
-      ...body,
+      ...validatedData,
       userId: auth.userId, // Associar a ordem de serviço ao usuário autenticado
       updatedBy: auth.userId, // Registrar quem criou/atualizou
     });

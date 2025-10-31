@@ -174,4 +174,4 @@ O sistema inclui documentação automática da API usando o Swagger. Acesse a do
 
 O sistema utiliza MongoDB como banco de dados. A conexão é gerenciada através do Mongoose.
 
-String de conexão: `mongodb+srv://matrix:stayFrosty2*@cluster-rectify-managem.1qivctf.mongodb.net/rectifydb?appName=Cluster-Rectify-Management`
+**Importante:** A string de conexão com o banco de dados deve ser configurada como uma variável de ambiente (`MONGODB_URI`) em um arquivo `.env.local` e nunca deve ser exposta no código-fonte.
