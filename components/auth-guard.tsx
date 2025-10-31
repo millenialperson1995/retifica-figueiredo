@@ -1,7 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AuthGuardProps {
@@ -9,22 +8,26 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push('/sign-in');
-    }
-  }, [isSignedIn, isLoaded, router]);
+    // Simular carregamento e sempre permitir acesso
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 500);
 
-  if (!isLoaded || !isSignedIn) {
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Verificando autenticação...</p>
+        <p>Carregando...</p>
       </div>
     );
   }
 
+  // Sempre permitir acesso já que removemos a autenticação do Clerk
   return <>{children}</>;
 }

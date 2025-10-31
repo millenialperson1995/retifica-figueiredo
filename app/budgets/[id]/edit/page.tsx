@@ -2,19 +2,8 @@ import { Suspense } from "react";
 import { BudgetForm } from "@/components/forms/budget-form";
 import { getBudgets } from "@/lib/storage";
 import AuthGuard from "@/components/auth-guard";
-import { auth } from "@clerk/nextjs/server";
 
 export default async function EditBudgetPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.userId;
-  if (!userId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Você precisa estar logado para acessar esta página.</p>
-      </div>
-    );
-  }
-
   // Em uma aplicação real, buscaríamos o orçamento pelo ID
   // Por enquanto, usaremos mock data
   const resolvedParams = await params;

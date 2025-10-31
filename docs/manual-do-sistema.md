@@ -29,7 +29,7 @@ O Sistema de Gestão da Retífica Figueirêdo é uma aplicação web moderna des
 - **shadcn/ui** - Componentes acessíveis e estilizados
 
 ### Autenticação
-- **Clerk** - Solução completa de autenticação e gestão de usuários
+- O sistema está configurado para futura integração com um sistema de autenticação
 
 ### API e Documentação
 - **Swagger** - Documentação automática da API

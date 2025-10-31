@@ -2,13 +2,6 @@
 
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
-import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
 
 export function AppHeader() {
   return (
@@ -24,17 +17,8 @@ export function AppHeader() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button variant="ghost">Entrar</Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <Button>Cadastrar</Button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          {/* Botões de autenticação removidos temporariamente */}
+          <div className="w-24"></div>
         </div>
       </div>
     </header>

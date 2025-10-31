@@ -1,19 +1,34 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const isProtectedRoute = createRouteMatcher([
+// Rotas protegidas que requerem autenticação
+const protectedRoutes = [
   '/',
-  '/budgets(.*)',
-  '/orders(.*)',
-  '/customers(.*)',
-  '/inventory(.*)',
-  '/services(.*)',
-]);
+  '/budgets',
+  '/orders',
+  '/customers',
+  '/inventory',
+  '/services',
+]
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
+// Verifica se a rota requer proteção
+function isProtectedRoute(pathname: string): boolean {
+  return protectedRoutes.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // Se for uma rota protegida, permitir acesso (por enquanto sem autenticação)
+  if (isProtectedRoute(pathname)) {
+    // Futuramente aqui podemos adicionar nossa própria lógica de autenticação
+    return NextResponse.next()
   }
-});
+  
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [
@@ -22,4 +37,4 @@ export const config = {
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],
-};
+}

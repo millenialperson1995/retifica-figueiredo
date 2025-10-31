@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { InventoryItemModel } from "@/lib/models/InventoryItem";
 import Link from "next/link";
 import InventoryActions from "@/components/inventory/InventoryActions";
-import { auth } from "@clerk/nextjs/server";
 
 interface InventoryItemPageProps {
   params: {
@@ -18,16 +17,10 @@ interface InventoryItemPageProps {
 }
 
 export default async function InventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  const userId = session?.userId;
-  if (!userId) {
-    redirect('/sign-in');
-  }
-
   const resolvedParams = await params;
   const { id } = resolvedParams;
   await connectToDatabase();
-  const item = await InventoryItemModel.findOne({ _id: id, userId: userId });
+  const item = await InventoryItemModel.findById(id);
 
   if (!item) {
     notFound();

@@ -1,19 +1,8 @@
-import { getAuth } from '@clerk/nextjs/server';
-import { NextRequest } from 'next/server';
+// lib/auth.ts
+// Helper function to authenticate API requests - placeholder for future authentication
 
-// Helper function to authenticate API requests
-export function authenticateAPIRequest(req: NextRequest): { authenticated: boolean; userId?: string } {
-  try {
-    // Using Clerk's getAuth function to authenticate the request
-    const { userId } = getAuth(req);
-    
-    if (!userId) {
-      return { authenticated: false };
-    }
-    
-    return { authenticated: true, userId };
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return { authenticated: false };
-  }
+export function authenticateAPIRequest(): { authenticated: boolean; userId?: string } {
+  // Por enquanto, permitir todas as requisições
+  // Futuramente podemos implementar nossa própria lógica de autenticação
+  return { authenticated: true, userId: 'default-user' };
 }

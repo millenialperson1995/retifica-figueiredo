@@ -1,16 +1,15 @@
-import { SignIn } from '@clerk/nextjs';
-
 export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <SignIn 
-        appearance={{
-          elements: {
-            formButtonPrimary: 
-              'bg-blue-600 hover:bg-blue-700 text-sm normal-case',
-          }
-        }}
-      />
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Sistema em Desenvolvimento</h1>
+        <p className="text-muted-foreground mb-6">
+          Esta página estará disponível em breve.
+        </p>
+        <a href="/" className="text-blue-600 hover:underline">
+          Voltar para a página inicial
+        </a>
+      </div>
     </div>
   );
 }
