@@ -1,0 +1,27 @@
+{
+  "name": "Retifica Figueiredo",
+  "short_name": "Figueiredo",
+  "description": "Sistema de gestão para Retifica Figueiredo.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0A1128",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icone-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/icone-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icone-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
